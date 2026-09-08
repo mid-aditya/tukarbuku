@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { books, cities, type Book, type Condition, type ListingType } from '$lib/data/books';
+  import { cities, type Book, type Condition, type ListingType } from '$lib/data/books';
 
   export let data: { books: Book[] };
 
