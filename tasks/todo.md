@@ -6,9 +6,9 @@
 - [x] Search and filters
 - [x] Client-side pagination-ready result slicing
 - [ ] Prisma schema and seed
-- [ ] Auth.js Google OAuth
+- [x] Auth.js Google OAuth integration and protected routes
 - [ ] Book detail and gated actions
-- [ ] Profile setup and dashboard
+- [ ] Profile setup and complete dashboard (protected shell exists)
 - [ ] Listing create/edit
 - [ ] Persisted WebSocket chat
 - [ ] Performance and accessibility audit

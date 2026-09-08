@@ -13,6 +13,7 @@
     "db:check": "drizzle-kit check"
   },
   "dependencies": {
+    "@auth/sveltekit": "^1.11.3",
     "drizzle-orm": "^0.45.2",
     "postgres": "^3.4.5",
     "zod": "^3.24.1"

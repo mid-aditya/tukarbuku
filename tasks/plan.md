@@ -23,12 +23,12 @@ Tukarbuku is a lightweight SvelteKit marketplace for buying and bartering used b
 
 ### Phase 2: Data and identity
 - [x] Task 4: Add Drizzle PostgreSQL schema and database utility.
-- [ ] Task 5: Add Google-only Auth.js integration and protected route helpers.
+- [x] Task 5: Add Google-only Auth.js integration and protected route helpers.
 - [ ] Task 6: Replace landing seed reads with paginated server queries.
 
 ### Phase 3: Listing and profile flows
 - [ ] Task 7: Add public book detail route and login-gated actions.
-- [ ] Task 8: Add profile setup and dashboard shell.
+- [ ] Task 8: Add profile setup and complete dashboard shell. (Auth-protected dashboard shell exists.)
 - [ ] Task 9: Add create/edit listing flow for JUAL and BARTER.
 
 ### Phase 4: Conversation and performance
