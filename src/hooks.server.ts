@@ -5,17 +5,24 @@ import { handle as authenticationHandle } from './auth';
 const protectedPrefixes = ['/dashboard', '/setup-profile'];
 
 const authorizationHandle: Handle = async ({ event, resolve }) => {
-  const isProtected = protectedPrefixes.some((prefix) => event.url.pathname === prefix || event.url.pathname.startsWith(`${prefix}/`));
+	const session = await event.locals.auth();
+	const path = event.url.pathname;
 
-  if (isProtected) {
-    const session = await event.locals.auth();
-    if (!session?.user) {
-      const redirectTo = `${event.url.pathname}${event.url.search}`;
-      throw redirect(303, `/login?redirectTo=${encodeURIComponent(redirectTo)}`);
-    }
-  }
+	// Gate all /dashboard and /setup-profile behind auth.
+	const needsAuth = protectedPrefixes.some(
+		(prefix) => path === prefix || path.startsWith(`${prefix}/`)
+	);
 
-  return resolve(event);
+	if (needsAuth && !session?.user) {
+		throw redirect(303, `/login?redirectTo=${encodeURIComponent(path + event.url.search)}`);
+	}
+
+	// If logged in but profile incomplete, force setup (except on the setup page itself).
+	if (session?.user && !session.user.profileCompleted && path !== '/setup-profile') {
+		throw redirect(303, '/setup-profile');
+	}
+
+	return resolve(event);
 };
 
 export const handle: Handle = sequence(authenticationHandle, authorizationHandle);
