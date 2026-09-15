@@ -1,14 +1,22 @@
 import { error } from '@sveltejs/kit';
-import { books } from '$lib/data/books';
 import type { PageServerLoad } from './$types';
+import { books } from '$lib/data/books';
 
-export const load: PageServerLoad = ({ params }) => {
-  const id = Number(params.id);
-  const book = Number.isInteger(id) ? books.find((item) => item.id === id) : undefined;
+export const load: PageServerLoad = async ({ params }) => {
+	// TODO: replace with DB query when database has data.
+	// Example:
+	//   const db = getDb();
+	//   const row = await db.select().from(booksTable).where(eq(booksTable.id, params.id)).get();
+	//   if (!row) throw error(404, 'Buku tidak ditemukan');
+	//   return { book: row };
 
-  if (!book) {
-    error(404, 'Buku tidak ditemukan');
-  }
+	// Seed lookup uses numeric id; DB uses string uuid.
+	const id = Number(params.id);
+	const book = books.find((b) => b.id === id);
 
-  return { book };
+	if (!book) {
+		throw error(404, 'Buku tidak ditemukan');
+	}
+
+	return { book };
 };
