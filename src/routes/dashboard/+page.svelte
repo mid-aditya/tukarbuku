@@ -6,7 +6,7 @@
 
 <svelte:head><title>Dashboard — Tukarbuku</title></svelte:head>
 
-<header class="dashboard-header"><a class="wordmark" href="/"><span>TB</span>Tukarbuku</a><nav><a class="active" href="/dashboard">Ringkasan</a><a href="/dashboard">Buku saya</a><a href="/dashboard">Pesan</a></nav><div class="account"><span>{data.session?.user?.name ?? 'Pembaca'}</span><SignOut><span slot="submitButton" class="signout">Keluar</span></SignOut></div></header>
+<header class="dashboard-header"><a class="wordmark" href="/"><span>TB</span>Tukarbuku</a><nav><a class="active" href="/dashboard">Ringkasan</a><a href="/dashboard">Buku saya</a><a href="/dashboard/pesanku">Pesan</a></nav><div class="account"><span>{data.session?.user?.name ?? 'Pembaca'}</span><SignOut><span slot="submitButton" class="signout">Keluar</span></SignOut></div></header>
 <main class="dashboard">
   <section class="dashboard-title"><div><p>DASHBOARD</p><h1>Selamat datang, {data.session?.user?.name?.split(' ')[0] ?? 'Pembaca'}</h1><span>Kelola listing, penawaran, dan percakapan dari satu tempat.</span></div><a href="/dashboard/buku-baru">Pasang buku</a></section>
   <section class="summary" aria-label="Ringkasan akun"><article><span>Listing aktif</span><strong>0</strong><small>Belum ada buku</small></article><article><span>Penawaran masuk</span><strong>0</strong><small>Tidak ada yang menunggu</small></article><article><span>Pesan belum dibaca</span><strong>0</strong><small>Semua sudah dibaca</small></article></section>
