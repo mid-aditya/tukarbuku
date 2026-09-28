@@ -37,11 +37,24 @@
 <svelte:head><title>Tukarbuku — Jual dan barter buku bekas</title></svelte:head>
 
 <main>
-	<section class="border-b bg-muted/50">
-		<div class="mx-auto max-w-6xl px-4 py-12 md:py-16">
-			<p class="text-xs font-semibold uppercase tracking-widest text-primary">Buku bekas dari pembaca di sekitarmu</p>
-			<h1 class="mt-3 max-w-2xl text-4xl font-bold tracking-tight md:text-5xl">Cari buku yang ingin kamu baca berikutnya.</h1>
-			<p class="mt-4 max-w-xl text-muted-foreground">Beli atau barter langsung dengan pemiliknya. Atur COD lewat chat dan periksa kondisi buku saat bertemu.</p>
+	<!-- Hero ala Proteinbolaget: banner hitam bold + CTA -->
+	<section class="bg-muted/40">
+		<div class="mx-auto max-w-7xl px-4 py-6">
+			<div class="relative overflow-hidden rounded-3xl bg-neutral-950 px-6 py-12 text-white md:px-12 md:py-16 dark:bg-black dark:border">
+				<p class="inline-flex rounded-full bg-amber-400 px-3 py-1 text-[11px] font-black uppercase tracking-widest text-black">Buku bekas • Jual & barter</p>
+				<h1 class="mt-4 max-w-2xl text-4xl font-black uppercase leading-none tracking-tight md:text-6xl">Buku next-mu ada di tetanggamu.</h1>
+				<p class="mt-4 max-w-xl font-medium text-neutral-300">Beli atau barter langsung dengan pemiliknya. Chat, COD, periksa kondisi — beres.</p>
+				<div class="mt-6 flex flex-wrap gap-3">
+					<Button href="#koleksi" size="lg" class="rounded-full bg-amber-400 font-black uppercase text-black hover:bg-amber-300">Belanja sekarang</Button>
+					<Button href="/dashboard/buku-baru" size="lg" variant="outline" class="rounded-full border-white/30 font-black uppercase text-white hover:bg-white/10">Jual bukumu</Button>
+				</div>
+			</div>
+			<!-- USP row -->
+			<div class="mt-4 grid gap-3 text-sm font-bold uppercase tracking-wide sm:grid-cols-3">
+				<div class="rounded-2xl border bg-background px-4 py-3">COD aman di kotamu</div>
+				<div class="rounded-2xl border bg-background px-4 py-3">Tanpa perantara</div>
+				<div class="rounded-2xl border bg-background px-4 py-3">Bisa barter</div>
+			</div>
 		</div>
 	</section>
 
@@ -65,24 +78,24 @@
 		</div>
 	</section>
 
-	<section class="mx-auto max-w-6xl px-4 py-10" id="koleksi">
+	<section class="mx-auto max-w-7xl px-4 py-10" id="koleksi">
 		<div class="mb-6 flex items-end justify-between">
-			<div><p class="text-xs font-semibold uppercase tracking-widest text-primary">Koleksi komunitas</p><h2 class="text-2xl font-bold tracking-tight">Buku tersedia</h2></div>
-			<p class="text-sm text-muted-foreground">{filteredBooks.length} hasil</p>
+			<div><p class="text-xs font-black uppercase tracking-widest text-primary">Koleksi komunitas</p><h2 class="text-3xl font-black uppercase tracking-tight">Buku tersedia</h2></div>
+			<p class="rounded-full bg-accent px-3 py-1 text-sm font-bold">{filteredBooks.length} hasil</p>
 		</div>
 
 		{#if visibleBooks.length}
-			<div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+			<div class="grid grid-cols-2 gap-4 lg:grid-cols-3">
 				{#each visibleBooks as book (book.id)}
-					<Card class="overflow-hidden">
-						<a href={`/buku/${book.id}`} class="relative block bg-muted">
-							<img src={book.cover} alt={`Sampul ${book.title}`} loading="lazy" class="mx-auto h-60 w-auto object-cover py-4" width="160" height="220" />
-							<Badge variant={book.listingType === 'JUAL' ? 'jual' : 'barter'} class="absolute left-3 top-3">{book.listingType === 'JUAL' ? 'DIJUAL' : 'BARTER'}</Badge>
+					<Card class="group overflow-hidden rounded-2xl">
+						<a href={`/buku/${book.id}`} class="relative block bg-muted/60 p-4">
+							<img src={book.cover} alt={`Sampul ${book.title}`} loading="lazy" class="mx-auto h-52 w-auto rounded-md object-cover shadow-md transition-transform group-hover:-translate-y-1 md:h-60" width="160" height="220" />
+							<Badge variant={book.listingType === 'JUAL' ? 'jual' : 'barter'} class="absolute left-3 top-3 rounded-full font-black uppercase">{book.listingType === 'JUAL' ? 'Dijual' : 'Barter'}</Badge>
 						</a>
-						<div class="space-y-2 p-4">
-							<a href={`/buku/${book.id}`} class="font-semibold leading-snug hover:underline">{book.title}</a>
-							<p class="text-sm text-muted-foreground">{book.author}</p>
-							<p class="text-sm font-semibold text-primary">{book.listingType === 'JUAL' ? formatPrice(book.price ?? 0) : book.wantedInExchange}</p>
+						<div class="space-y-1.5 p-4">
+							<p class="text-[11px] font-bold uppercase tracking-widest text-muted-foreground">{book.author}</p>
+							<a href={`/buku/${book.id}`} class="line-clamp-1 font-bold leading-snug hover:underline">{book.title}</a>
+							<p class="text-lg font-black">{book.listingType === 'JUAL' ? formatPrice(book.price ?? 0) : book.wantedInExchange}</p>
 							<div class="flex gap-2 text-xs text-muted-foreground"><span class="rounded bg-secondary px-2 py-0.5">{book.condition}</span><span class="inline-flex items-center gap-1"><MapPin class="size-3" />{book.city}</span></div>
 							<div class="flex items-center gap-2 border-t pt-3 text-sm">
 								<Avatar name={book.seller} class="size-7" />
@@ -110,10 +123,10 @@
 		</div>
 	</section>
 
-	<section class="bg-primary text-primary-foreground" id="cara-kerja">
-		<div class="mx-auto grid max-w-6xl gap-8 px-4 py-12 md:grid-cols-3">
+	<section class="bg-neutral-950 text-white dark:bg-black dark:border-y" id="cara-kerja">
+		<div class="mx-auto grid max-w-7xl gap-6 px-4 py-12 md:grid-cols-3">
 			{#each [['01', 'Temukan buku', 'Cari berdasarkan judul, kondisi, dan kota COD.'], ['02', 'Chat pemilik', 'Tanyakan detail dan sepakati waktu bertemu.'], ['03', 'Periksa dan tukar', 'Temui di tempat umum dan periksa buku.']] as [n, t, d]}
-				<div class="border-t border-white/20 pt-4"><p class="text-xs opacity-70">{n}</p><h2 class="mt-2 text-lg font-semibold">{t}</h2><p class="mt-1 text-sm opacity-80">{d}</p></div>
+				<div class="rounded-2xl border border-white/15 p-6"><p class="text-xs font-black text-amber-400">{n}</p><h2 class="mt-2 text-xl font-black uppercase">{t}</h2><p class="mt-1 text-sm text-neutral-300">{d}</p></div>
 			{/each}
 		</div>
 	</section>
