@@ -20,7 +20,7 @@
 		otherUserName?: string;
 	}
 
-	const conversationId = $page.params.conversationId;
+	const conversationId = $page.params.conversationId ?? '';
 
 	let messages: Message[] = [];
 	let loading = true;
