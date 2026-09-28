@@ -1,6 +1,9 @@
 <script lang="ts">
-	import { onMount, onDestroy, tick } from 'svelte';
+	import { onMount, tick } from 'svelte';
 	import { page } from '$app/stores';
+	import Card from '$lib/components/ui/card.svelte';
+	import Button from '$lib/components/ui/button.svelte';
+	import Input from '$lib/components/ui/input.svelte';
 
 	interface Message {
 		id: string;
@@ -10,7 +13,7 @@
 		sentAt: string;
 		readAt: string | null;
 		senderName?: string;
-		tempId?: string; // client-side only, for optimistic UI
+		tempId?: string;
 	}
 
 	interface Conversation {
@@ -22,32 +25,27 @@
 
 	const conversationId = $page.params.conversationId ?? '';
 
-	let messages: Message[] = [];
-	let loading = true;
-	let error: string | null = null;
-	let messageInput = '';
-	let sending = false;
-	let messagesEl: HTMLDivElement;
-	let currentUserId: string | null = null;
-	let conversation: Conversation | null = null;
+	let messages: Message[] = $state([]);
+	let loading = $state(true);
+	let error: string | null = $state(null);
+	let messageInput = $state('');
+	let sending = $state(false);
+	let messagesEl: HTMLDivElement | undefined = $state(undefined);
+	let currentUserId: string | null = $state(null);
+	let conversation: Conversation | null = $state(null);
 
 	function formatTime(iso: string): string {
-		const d = new Date(iso);
-		return d.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+		return new Date(iso).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
 	}
-
 	function formatDate(iso: string): string {
 		const d = new Date(iso);
 		const today = new Date();
 		const yesterday = new Date(today);
 		yesterday.setDate(yesterday.getDate() - 1);
-
 		if (d.toDateString() === today.toDateString()) return 'Hari ini';
 		if (d.toDateString() === yesterday.toDateString()) return 'Kemarin';
 		return d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
 	}
-
-	// Group messages by date for display
 	function groupByDate(msgs: Message[]): { date: string; messages: Message[] }[] {
 		const groups: Record<string, Message[]> = {};
 		for (const msg of msgs) {
@@ -55,19 +53,14 @@
 			if (!groups[key]) groups[key] = [];
 			groups[key].push(msg);
 		}
-		return Object.entries(groups).map(([, msgs]) => ({
-			date: groups[Object.keys(groups).find(k => groups[k] === msgs)!][0].sentAt,
-			messages: msgs,
-		}));
+		return Object.entries(groups).map(([, v]) => ({ date: v[0].sentAt, messages: v }));
 	}
+	let dateGroups = $derived(groupByDate(messages));
 
 	async function scrollToBottom() {
 		await tick();
-		if (messagesEl) {
-			messagesEl.scrollTop = messagesEl.scrollHeight;
-		}
+		if (messagesEl) messagesEl.scrollTop = messagesEl.scrollHeight;
 	}
-
 	async function loadMessages() {
 		try {
 			const res = await fetch(`/api/conversations/${conversationId}/messages`);
@@ -83,60 +76,40 @@
 			loading = false;
 		}
 	}
-
 	async function sendMessage() {
 		if (!messageInput.trim() || sending) return;
 		const content = messageInput.trim();
 		messageInput = '';
 		sending = true;
-
 		const tempId = `temp-${Date.now()}`;
-
-		// Optimistic update
-		const optimisticMsg: Message = {
-			id: tempId,
-			conversationId,
-			senderId: currentUserId ?? '',
-			content,
-			sentAt: new Date().toISOString(),
-			readAt: null,
-			tempId,
-		};
+		const optimisticMsg: Message = { id: tempId, conversationId, senderId: currentUserId ?? '', content, sentAt: new Date().toISOString(), readAt: null, tempId };
 		messages = [...messages, optimisticMsg];
 		await scrollToBottom();
-
 		try {
 			const res = await fetch('/api/messages', {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ conversationId, content }),
+				body: JSON.stringify({ conversationId, content })
 			});
-
 			if (!res.ok) throw new Error('Gagal mengirim pesan.');
-
 			const saved = await res.json();
-
-			// Replace optimistic message with real one
-			messages = messages.map(m => m.tempId === tempId ? { ...saved, tempId: undefined } : m);
+			messages = messages.map((m) => (m.tempId === tempId ? { ...saved, tempId: undefined } : m));
 		} catch (e) {
-			// Remove optimistic message on failure
-			messages = messages.filter(m => m.tempId !== tempId);
+			messages = messages.filter((m) => m.tempId !== tempId);
 			messageInput = content;
 			error = e instanceof Error ? e.message : 'Gagal mengirim pesan.';
 		} finally {
 			sending = false;
 		}
 	}
-
 	async function loadConversation() {
 		try {
 			const res = await fetch('/api/conversations');
 			if (!res.ok) return;
 			const convs: Conversation[] = await res.json();
-			conversation = convs.find(c => c.id === conversationId) ?? null;
+			conversation = convs.find((c) => c.id === conversationId) ?? null;
 		} catch { /* non-critical */ }
 	}
-
 	function handleKeydown(e: KeyboardEvent) {
 		if (e.key === 'Enter' && !e.shiftKey) {
 			e.preventDefault();
@@ -149,202 +122,48 @@
 		await loadMessages();
 		await scrollToBottom();
 	});
-
-
-
-	$: dateGroups = groupByDate(messages);
 </script>
 
-<svelte:head>
-	<title>Percakapan — Tukarbuku</title>
-</svelte:head>
+<svelte:head><title>Percakapan — Tukarbuku</title></svelte:head>
 
-<header class="chat-header">
-	<a class="back-btn" href="/dashboard/pesanku" aria-label="Kembali ke daftar pesan">
-		<svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
-			<path d="M11 4L6 9L11 14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-		</svg>
-	</a>
-	<div class="header-info">
-		{#if conversation}
-			<strong>{conversation.otherUserName ?? 'Percakapan'}</strong>
-			{#if conversation.bookTitle}
-				<span>· {conversation.bookTitle}</span>
+<div class="mx-auto flex max-w-6xl flex-col px-4 py-6">
+	<Card class="flex items-center gap-3 p-3">
+		<Button href="/dashboard/pesanku" variant="ghost" size="sm" aria-label="Kembali ke daftar pesan">←</Button>
+		<div class="min-w-0">
+			{#if conversation}
+				<p class="truncate text-sm font-bold">{conversation.otherUserName ?? 'Percakapan'}{#if conversation.bookTitle}<span class="font-normal text-muted-foreground"> · {conversation.bookTitle}</span>{/if}</p>
+			{:else}
+				<p class="text-sm text-muted-foreground">Memuat…</p>
 			{/if}
-		{:else}
-			<strong>Memuat…</strong>
-		{/if}
-	</div>
-</header>
+		</div>
+	</Card>
 
-<main class="chat-shell">
 	{#if loading}
-		<div class="loading-state">
-			<div class="spinner"></div>
-			<p>Memuat pesan…</p>
-		</div>
-	{:else if error}
-		<div class="error-state">
+		<Card class="mt-4 p-12 text-center text-sm text-muted-foreground"><p>Memuat pesan…</p></Card>
+	{:else if error && !messages.length}
+		<Card class="mt-4 flex flex-col items-center gap-3 p-12 text-sm text-destructive">
 			<p>{error}</p>
-			<button on:click={loadMessages}>Coba lagi</button>
-		</div>
+			<Button variant="outline" size="sm" onclick={() => loadMessages()}>Coba lagi</Button>
+		</Card>
 	{:else}
-		<div class="messages-area" bind:this={messagesEl}>
-			{#each dateGroups as group}
-				<div class="date-separator">
-					<span>{formatDate(group.date)}</span>
-				</div>
-				{#each group.messages as msg (msg.id)}
-					<div class="message" class:own={msg.senderId === currentUserId}>
-						<div class="bubble">
-							<p>{msg.content}</p>
-							<time>{formatTime(msg.sentAt)}</time>
+		<Card class="mt-4 flex h-[55vh] flex-col overflow-hidden p-0">
+			<div class="flex flex-1 flex-col gap-1 overflow-y-auto p-4" bind:this={messagesEl}>
+				{#each dateGroups as group}
+					<div class="my-2 flex justify-center"><span class="rounded-full bg-muted px-3 py-1 text-xs font-semibold text-muted-foreground">{formatDate(group.date)}</span></div>
+					{#each group.messages as msg (msg.id)}
+						<div class="flex" class:justify-end={msg.senderId === currentUserId}>
+							<div class="max-w-[78%] rounded-xl border px-3 py-2" class:bg-primary={msg.senderId === currentUserId} class:text-primary-foreground={msg.senderId === currentUserId} class:bg-background={msg.senderId !== currentUserId}>
+								<p class="m-0 text-sm whitespace-pre-wrap break-words">{msg.content}</p>
+								<time class="text-[10px] opacity-70">{formatTime(msg.sentAt)}</time>
+							</div>
 						</div>
-					</div>
+					{/each}
 				{/each}
-			{/each}
-		</div>
+			</div>
+			<div class="flex items-center gap-2 border-t p-3">
+				<Input bind:value={messageInput} onkeydown={handleKeydown} placeholder="Ketik pesan…" maxlength="2000" aria-label="Isi pesan" class="flex-1" />
+				<Button onclick={() => sendMessage()} disabled={!messageInput.trim() || sending} aria-label="Kirim pesan">Kirim</Button>
+			</div>
+		</Card>
 	{/if}
-</main>
-
-<div class="input-bar">
-	<textarea
-		bind:value={messageInput}
-		on:keydown={handleKeydown}
-		placeholder="Ketik pesan…"
-		rows="1"
-		maxlength="2000"
-		aria-label="Isi pesan"
-	></textarea>
-	<button on:click={sendMessage} disabled={!messageInput.trim() || sending} aria-label="Kirim pesan">
-		<svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
-			<path d="M3 10L17 3L10 17L9 11L3 10Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
-		</svg>
-	</button>
 </div>
-
-<style>
-	.chat-header {
-		height: 64px;
-		padding: 0 16px;
-		display: flex;
-		align-items: center;
-		gap: 12px;
-		background: white;
-		border-bottom: 1px solid var(--border);
-		position: sticky;
-		top: 0;
-		z-index: 10;
-	}
-	.back-btn {
-		display: grid;
-		place-items: center;
-		width: 36px;
-		height: 36px;
-		color: var(--stone);
-		text-decoration: none;
-		border-radius: 4px;
-		transition: background .12s ease;
-	}
-	.back-btn:hover { background: var(--muted); }
-	.header-info { min-width: 0; }
-	.header-info strong { display: block; font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-	.header-info span { font-size: 12px; color: var(--stone); }
-
-	.chat-shell {
-		flex: 1;
-		overflow: hidden;
-	}
-	.loading-state, .error-state {
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-		justify-content: center;
-		gap: 14px;
-		height: 100%;
-		min-height: 300px;
-		color: var(--stone);
-		font-size: 14px;
-	}
-	.spinner { width: 28px; height: 28px; border: 3px solid var(--border); border-top-color: var(--leaf); border-radius: 50%; animation: spin .7s linear infinite; }
-	@keyframes spin { to { transform: rotate(360deg); } }
-	.error-state button { padding: 8px 16px; background: var(--leaf); color: white; border: 0; border-radius: 4px; font-size: 13px; font-weight: 700; cursor: pointer; }
-
-	.messages-area {
-		height: calc(100vh - 130px);
-		overflow-y: auto;
-		padding: 16px 16px 8px;
-		display: flex;
-		flex-direction: column;
-		gap: 4px;
-	}
-	.date-separator {
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		margin: 14px 0 8px;
-	}
-	.date-separator span {
-		padding: 4px 10px;
-		background: var(--muted);
-		border-radius: 20px;
-		font-size: 11px;
-		color: var(--stone);
-		font-weight: 700;
-	}
-	.message { display: flex; margin-bottom: 2px; }
-	.message.own { justify-content: flex-end; }
-	.bubble {
-		max-width: min(380px, 78%);
-		padding: 10px 14px;
-		background: white;
-		border: 1px solid var(--border);
-		border-radius: 12px 12px 12px 4px;
-	}
-	.message.own .bubble { background: #e8f2ec; border-color: #c8dac9; border-radius: 12px 12px 4px 12px; }
-	.bubble p { margin: 0 0 4px; font-size: 14px; line-height: 1.55; word-break: break-word; white-space: pre-wrap; }
-	.bubble time { font-size: 10px; color: var(--stone); }
-
-	.input-bar {
-		position: fixed;
-		bottom: 0;
-		left: 0;
-		right: 0;
-		display: flex;
-		align-items: flex-end;
-		gap: 10px;
-		padding: 12px 14px;
-		background: white;
-		border-top: 1px solid var(--border);
-	}
-	.input-bar textarea {
-		flex: 1;
-		min-height: 44px;
-		max-height: 140px;
-		padding: 10px 14px;
-		border: 1px solid var(--border);
-		border-radius: 22px;
-		background: white;
-		color: var(--ink);
-		font-size: 14px;
-		resize: none;
-		line-height: 1.5;
-		transition: border-color .15s ease;
-	}
-	.input-bar textarea:focus { outline: 0; border-color: var(--leaf); }
-	.input-bar button {
-		width: 44px;
-		height: 44px;
-		border: 0;
-		border-radius: 50%;
-		background: var(--leaf);
-		color: white;
-		display: grid;
-		place-items: center;
-		cursor: pointer;
-		flex-shrink: 0;
-		transition: background .15s ease, opacity .15s ease;
-	}
-	.input-bar button:hover:not(:disabled) { background: var(--leaf-dark); }
-	.input-bar button:disabled { opacity: .4; cursor: not-allowed; }
-</style>

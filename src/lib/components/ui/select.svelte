@@ -1,22 +1,7 @@
 <script lang="ts">
-  export let value = '';
-  export let name: string | undefined = undefined;
-  export let id: string | undefined = undefined;
-  export let required = false;
-  export let disabled = false;
-  export let ariaLabel: string | undefined = undefined;
-  export let className = '';
-
+	import { cn } from '$lib/utils.js';
+	let { class: className, children, ...rest }: any = $props();
 </script>
-
-<select
-  bind:value
-  {name}
-  {id}
-  {required}
-  {disabled}
-  aria-label={ariaLabel}
-  class={`ui-select ${className}`}}
->
-  <slot />
+<select class={cn('flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-xs outline-none focus-visible:ring-2 focus-visible:ring-ring/40 disabled:opacity-50', className)} {...rest}>
+	{@render children?.()}
 </select>

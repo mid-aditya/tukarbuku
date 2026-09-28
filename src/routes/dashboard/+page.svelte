@@ -1,20 +1,55 @@
 <script lang="ts">
-  import type { PageData } from './$types';
-  import { SignOut } from '@auth/sveltekit/components';
-  export let data: PageData;
+	import type { PageData } from './$types';
+	import { SignOut } from '@auth/sveltekit/components';
+	import Card from '$lib/components/ui/card.svelte';
+	import Button from '$lib/components/ui/button.svelte';
+	let { data }: { data: PageData } = $props();
 </script>
 
 <svelte:head><title>Dashboard — Tukarbuku</title></svelte:head>
 
-<header class="dashboard-header"><a class="wordmark" href="/"><span>TB</span>Tukarbuku</a><nav><a class="active" href="/dashboard">Ringkasan</a><a href="/dashboard">Buku saya</a><a href="/dashboard/pesanku">Pesan</a></nav><div class="account"><span>{data.session?.user?.name ?? 'Pembaca'}</span><SignOut><span slot="submitButton" class="signout">Keluar</span></SignOut></div></header>
-<main class="dashboard">
-  <section class="dashboard-title"><div><p>DASHBOARD</p><h1>Selamat datang, {data.session?.user?.name?.split(' ')[0] ?? 'Pembaca'}</h1><span>Kelola listing, penawaran, dan percakapan dari satu tempat.</span></div><a href="/dashboard/buku-baru">Pasang buku</a></section>
-  <section class="summary" aria-label="Ringkasan akun"><article><span>Listing aktif</span><strong>0</strong><small>Belum ada buku</small></article><article><span>Penawaran masuk</span><strong>0</strong><small>Tidak ada yang menunggu</small></article><article><span>Pesan belum dibaca</span><strong>0</strong><small>Semua sudah dibaca</small></article></section>
-  <div class="content-grid"><section class="panel"><div class="panel-head"><div><p>BUKU SAYA</p><h2>Listing terbaru</h2></div><a href="/dashboard/buku-baru">Tambah baru</a></div><div class="empty"><h3>Belum ada buku yang dipasang</h3><p>Mulai dari satu buku yang sudah selesai kamu baca.</p><a href="/dashboard/buku-baru">Pasang buku pertama</a></div></section><aside class="panel activity"><div class="panel-head"><div><p>AKTIVITAS</p><h2>Terbaru</h2></div></div><div class="activity-empty"><span>Belum ada aktivitas.</span><p>Pesan dan perubahan status transaksi akan muncul di sini.</p></div></aside></div>
-  <section class="safety"><strong>Transaksi aman dimulai dari kebiasaan sederhana.</strong><p>Gunakan chat Tukarbuku, bertemu di tempat umum, dan periksa kondisi buku sebelum membayar.</p></section>
-</main>
+<div class="mx-auto max-w-6xl px-4 py-10">
+	<div class="flex flex-wrap items-end justify-between gap-4">
+		<div>
+			<p class="mb-1 text-xs font-bold uppercase tracking-widest text-primary">Dashboard</p>
+			<h1 class="text-3xl font-bold tracking-tight md:text-5xl">Selamat datang, {data.session?.user?.name?.split(' ')[0] ?? 'Pembaca'}</h1>
+			<p class="mt-2 text-sm text-muted-foreground">Kelola listing, penawaran, dan percakapan dari satu tempat. <span class="ml-2">{data.session?.user?.name ?? 'Pembaca'}</span>
+				<SignOut><span slot="submitButton" class="cursor-pointer text-primary underline">Keluar</span></SignOut>
+			</p>
+		</div>
+		<Button href="/dashboard/buku-baru">Pasang buku</Button>
+	</div>
 
-<style>
-  :global(body) { background: var(--paper); }.dashboard-header { height: 72px; padding: 0 clamp(20px, 5vw, 72px); display: flex; align-items: center; gap: 48px; background: white; border-bottom: 1px solid var(--border); }.wordmark { display: flex; gap: 10px; align-items: center; color: var(--ink); text-decoration: none; font-weight: 750; }.wordmark span { display: grid; place-items: center; width: 32px; height: 32px; background: var(--ink); color: white; font-size: 11px; }.dashboard-header nav { display: flex; align-self: stretch; gap: 28px; }.dashboard-header nav a { display: flex; align-items: center; color: var(--stone); text-decoration: none; font-size: 13px; font-weight: 650; border-bottom: 2px solid transparent; }.dashboard-header nav a.active { color: var(--ink); border-color: var(--leaf); }.account { margin-left: auto; display: flex; align-items: center; gap: 18px; color: var(--stone); font-size: 13px; }.signout { color: var(--leaf); text-decoration: underline; cursor: pointer; }.dashboard { max-width: 1280px; margin: auto; padding: 56px clamp(20px, 5vw, 72px) 80px; }.dashboard-title { display: flex; justify-content: space-between; align-items: end; margin-bottom: 42px; }.dashboard-title p, .panel-head p { margin: 0 0 8px; color: var(--leaf); font-size: 11px; letter-spacing: .12em; font-weight: 800; }.dashboard-title h1 { margin: 0 0 8px; font-size: clamp(34px, 4vw, 52px); letter-spacing: -.05em; }.dashboard-title span { color: var(--stone); font-size: 14px; }.dashboard-title > a { min-height: 46px; padding: 0 18px; display: flex; align-items: center; background: var(--leaf); color: white; border-radius: 4px; text-decoration: none; font-size: 14px; font-weight: 750; }.summary { display: grid; grid-template-columns: repeat(3, 1fr); background: white; border: 1px solid var(--border); }.summary article { min-height: 155px; padding: 24px; border-right: 1px solid var(--border); display: grid; grid-template-columns: 1fr auto; }.summary article:last-child { border: 0; }.summary span { color: var(--stone); font-size: 13px; }.summary strong { grid-row: 1 / 3; grid-column: 2; font-size: 46px; line-height: 1; letter-spacing: -.06em; }.summary small { align-self: end; color: #8a958f; font-size: 12px; }.content-grid { margin-top: 24px; display: grid; grid-template-columns: 2fr 1fr; gap: 24px; }.panel { background: white; border: 1px solid var(--border); min-height: 340px; }.panel-head { min-height: 82px; padding: 20px 24px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); }.panel-head h2 { margin: 0; font-size: 20px; letter-spacing: -.02em; }.panel-head a { color: var(--leaf); font-size: 13px; font-weight: 700; }.empty { min-height: 255px; padding: 32px; display: flex; flex-direction: column; align-items: flex-start; justify-content: center; }.empty h3 { margin: 0 0 7px; font-size: 20px; }.empty p, .activity-empty p { margin: 0 0 24px; color: var(--stone); font-size: 13px; }.empty a { min-height: 44px; padding: 0 15px; display: flex; align-items: center; border: 1px solid var(--leaf); border-radius: 4px; color: var(--leaf); text-decoration: none; font-size: 13px; font-weight: 750; }.activity-empty { padding: 28px 24px; }.activity-empty span { display: block; margin-bottom: 8px; font-weight: 700; }.safety { margin-top: 24px; padding: 20px 24px; background: #edf2ee; border-left: 3px solid var(--leaf); display: flex; justify-content: space-between; gap: 30px; }.safety strong { font-size: 14px; }.safety p { max-width: 580px; margin: 0; color: var(--stone); font-size: 13px; }
-  @media (max-width: 760px) { .dashboard-header { padding: 0 16px; }.dashboard-header nav, .account > span { display: none; }.dashboard { padding: 38px 16px 64px; }.dashboard-title { align-items: flex-start; gap: 24px; }.dashboard-title span { display: none; }.dashboard-title h1 { font-size: 34px; }.summary { grid-template-columns: 1fr; }.summary article { min-height: 100px; border-right: 0; border-bottom: 1px solid var(--border); }.content-grid { grid-template-columns: 1fr; }.safety { flex-direction: column; gap: 8px; } }
-</style>
+	<div class="mt-8 grid gap-4 md:grid-cols-3">
+		<Card class="p-6"><p class="text-sm text-muted-foreground">Listing aktif</p><p class="mt-1 text-3xl font-bold">0</p><p class="text-xs text-muted-foreground">Belum ada buku</p></Card>
+		<Card class="p-6"><p class="text-sm text-muted-foreground">Penawaran masuk</p><p class="mt-1 text-3xl font-bold">0</p><p class="text-xs text-muted-foreground">Tidak ada yang menunggu</p></Card>
+		<Card class="p-6"><p class="text-sm text-muted-foreground">Pesan belum dibaca</p><p class="mt-1 text-3xl font-bold">0</p><p class="text-xs text-muted-foreground">Semua sudah dibaca</p></Card>
+	</div>
+
+	<div class="mt-4 grid gap-4 md:grid-cols-[1fr_320px]">
+		<Card class="p-6">
+			<div class="mb-4 flex items-center justify-between">
+				<div><p class="text-xs font-bold uppercase tracking-widest text-primary">Buku saya</p><h2 class="text-xl font-bold">Listing terbaru</h2></div>
+				<Button href="/dashboard/buku-baru" variant="outline" size="sm">Tambah baru</Button>
+			</div>
+			<div class="rounded-lg bg-muted/50 p-8 text-center">
+				<h3 class="font-semibold">Belum ada buku yang dipasang</h3>
+				<p class="mt-1 text-sm text-muted-foreground">Mulai dari satu buku yang sudah selesai kamu baca.</p>
+				<Button href="/dashboard/buku-baru" size="sm" class="mt-4">Pasang buku pertama</Button>
+			</div>
+		</Card>
+		<Card class="p-6">
+			<p class="text-xs font-bold uppercase tracking-widest text-primary">Aktivitas</p>
+			<h2 class="text-xl font-bold">Terbaru</h2>
+			<div class="mt-4 rounded-lg bg-muted/50 p-6 text-center text-sm text-muted-foreground">
+				<p class="font-medium text-foreground">Belum ada aktivitas.</p>
+				<p class="mt-1 text-xs">Pesan dan perubahan status transaksi akan muncul di sini.</p>
+			</div>
+		</Card>
+	</div>
+
+	<Card class="mt-4 bg-muted/50 p-6">
+		<p class="font-semibold">Transaksi aman dimulai dari kebiasaan sederhana.</p>
+		<p class="mt-1 text-sm text-muted-foreground">Gunakan chat Tukarbuku, bertemu di tempat umum, dan periksa kondisi buku sebelum membayar.</p>
+	</Card>
+</div>

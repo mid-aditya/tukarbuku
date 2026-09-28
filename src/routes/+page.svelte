@@ -1,85 +1,120 @@
 <script lang="ts">
-  import { cities, type Book, type Condition, type ListingType } from '$lib/data/books';
-  import Button from '$lib/components/ui/button.svelte';
-  import Badge from '$lib/components/ui/badge.svelte';
-  import Input from '$lib/components/ui/input.svelte';
-  import Select from '$lib/components/ui/select.svelte';
+	import { cities, type Book, type Condition, type ListingType } from '$lib/data/books';
+	import Button from '$lib/components/ui/button.svelte';
+	import Badge from '$lib/components/ui/badge.svelte';
+	import Input from '$lib/components/ui/input.svelte';
+	import Select from '$lib/components/ui/select.svelte';
+	import Card from '$lib/components/ui/card.svelte';
+	import Avatar from '$lib/components/ui/avatar.svelte';
+	import { Search, MapPin, ArrowRight } from '@lucide/svelte';
 
-  export let data: { books: Book[] };
-  let query = '';
-  let type: 'SEMUA' | ListingType = 'SEMUA';
-  let condition: 'Semua kondisi' | Condition = 'Semua kondisi';
-  let city = 'Semua kota';
-  let page = 1;
-  const pageSize = 6;
+	export let data: { books: Book[] };
+	let query = '';
+	let type: 'SEMUA' | ListingType = 'SEMUA';
+	let condition: 'Semua kondisi' | Condition = 'Semua kondisi';
+	let city = 'Semua kota';
+	let page = 1;
+	const pageSize = 6;
 
-  $: filteredBooks = data.books.filter((book) => {
-    const term = query.trim().toLowerCase();
-    return (!term || `${book.title} ${book.author}`.toLowerCase().includes(term)) &&
-      (type === 'SEMUA' || book.listingType === type) &&
-      (condition === 'Semua kondisi' || book.condition === condition) &&
-      (city === 'Semua kota' || book.city === city);
-  });
-  $: totalPages = Math.max(1, Math.ceil(filteredBooks.length / pageSize));
-  $: page = Math.min(page, totalPages);
-  $: visibleBooks = filteredBooks.slice((page - 1) * pageSize, page * pageSize);
-  $: activeFilters = Number(condition !== 'Semua kondisi') + Number(city !== 'Semua kota');
+	$: filteredBooks = data.books.filter((book) => {
+		const term = query.trim().toLowerCase();
+		return (
+			(!term || `${book.title} ${book.author}`.toLowerCase().includes(term)) &&
+			(type === 'SEMUA' || book.listingType === type) &&
+			(condition === 'Semua kondisi' || book.condition === condition) &&
+			(city === 'Semua kota' || book.city === city)
+		);
+	});
+	$: totalPages = Math.max(1, Math.ceil(filteredBooks.length / pageSize));
+	$: page = Math.min(page, totalPages);
+	$: visibleBooks = filteredBooks.slice((page - 1) * pageSize, page * pageSize);
 
-  const formatPrice = (price: number) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(price);
-  const resetPage = () => (page = 1);
-  const resetFilters = () => { query = ''; type = 'SEMUA'; condition = 'Semua kondisi'; city = 'Semua kota'; page = 1; };
+	const formatPrice = (price: number) =>
+		new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(price);
+	const resetFilters = () => { query = ''; type = 'SEMUA'; condition = 'Semua kondisi'; city = 'Semua kota'; page = 1; };
 </script>
 
-<svelte:head>
-  <title>Tukarbuku — Jual dan barter buku bekas</title>
-  <meta name="description" content="Cari buku bekas untuk dibeli atau dibarter langsung dengan pembaca di kotamu." />
-</svelte:head>
-
-<header class="site-header">
-  <a class="wordmark" href="/" aria-label="Tukarbuku beranda"><span>TB</span>Tukarbuku</a>
-  <nav aria-label="Navigasi utama"><a class="nav-active" href="#koleksi" aria-current="page">Koleksi</a><a href="#cara-kerja">Cara kerja</a></nav>
-  <div class="header-actions"><a class="text-link" href="/login">Masuk</a><a class="primary-small" href="/dashboard/buku-baru">Pasang buku</a></div>
-</header>
+<svelte:head><title>Tukarbuku — Jual dan barter buku bekas</title></svelte:head>
 
 <main>
-  <section class="intro">
-    <div class="intro-copy">
-      <p class="kicker">Buku bekas dari pembaca di sekitarmu</p>
-      <h1>Cari buku yang ingin kamu baca berikutnya.</h1>
-      <p>Beli atau barter langsung dengan pemiliknya. Atur COD lewat chat dan periksa kondisi buku saat bertemu.</p>
-    </div>
-    <div class="catalog-mark" aria-hidden="true"><span>KATALOG</span><strong>08</strong><small>listing terbaru</small></div>
-  </section>
+	<section class="border-b bg-muted/50">
+		<div class="mx-auto max-w-6xl px-4 py-12 md:py-16">
+			<p class="text-xs font-semibold uppercase tracking-widest text-primary">Buku bekas dari pembaca di sekitarmu</p>
+			<h1 class="mt-3 max-w-2xl text-4xl font-bold tracking-tight md:text-5xl">Cari buku yang ingin kamu baca berikutnya.</h1>
+			<p class="mt-4 max-w-xl text-muted-foreground">Beli atau barter langsung dengan pemiliknya. Atur COD lewat chat dan periksa kondisi buku saat bertemu.</p>
+		</div>
+	</section>
 
-  <section class="search-panel" aria-label="Pencarian buku">
-    <label class="search-input"><span>Cari</span><Input bind:value={query} on:input={resetPage} type="search" placeholder="Judul buku atau nama penulis" ariaLabel="Cari judul atau penulis" /></label>
-    <div class="type-tabs" aria-label="Tipe listing"><button class:active={type === 'SEMUA'} on:click={() => { type = 'SEMUA'; resetPage(); }}>Semua</button><button class:active={type === 'JUAL'} on:click={() => { type = 'JUAL'; resetPage(); }}>Dijual</button><button class:active={type === 'BARTER'} on:click={() => { type = 'BARTER'; resetPage(); }}>Barter</button></div>
-    <label class="select-control"><span>Kondisi</span><Select bind:value={condition} on:change={resetPage} ariaLabel="Filter kondisi"><option>Semua kondisi</option><option>Baru</option><option>Baik</option><option>Cukup</option><option>Rusak ringan</option></Select></label>
-    <label class="select-control"><span>Kota</span><Select bind:value={city} on:change={resetPage} ariaLabel="Filter kota">{#each cities as cityName}<option>{cityName}</option>{/each}</Select></label>
-    {#if activeFilters}<Button className="reset" variant="ghost" size="sm" on:click={resetFilters}>Reset ({activeFilters})</Button>{/if}
-  </section>
+	<section class="border-b bg-background" aria-label="Pencarian buku">
+		<div class="mx-auto grid max-w-6xl gap-3 px-4 py-4 md:grid-cols-[1fr_auto_auto_auto]">
+			<div class="relative">
+				<Search class="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+				<Input bind:value={query} type="search" placeholder="Judul buku atau nama penulis" class="pl-9" />
+			</div>
+			<div class="flex rounded-md border p-1">
+				{#each ['SEMUA', 'JUAL', 'BARTER'] as t}
+					<button on:click={() => { type = t; page = 1; }} class="rounded px-3 py-1.5 text-sm font-medium {type === t ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'}">{t === 'SEMUA' ? 'Semua' : t === 'JUAL' ? 'Dijual' : 'Barter'}</button>
+				{/each}
+			</div>
+			<Select bind:value={condition} on:change={() => (page = 1)} class="md:w-40">
+				<option>Semua kondisi</option><option>Baru</option><option>Baik</option><option>Cukup</option><option>Rusak ringan</option>
+			</Select>
+			<Select bind:value={city} on:change={() => (page = 1)} class="md:w-40">
+				{#each cities as cityName}<option>{cityName}</option>{/each}
+			</Select>
+		</div>
+	</section>
 
-  <section class="catalog" id="koleksi" aria-labelledby="catalog-title">
-    <div class="catalog-head"><div><p class="section-label">Koleksi komunitas</p><h2 id="catalog-title">Buku tersedia</h2></div><p>{filteredBooks.length} hasil</p></div>
-    {#if visibleBooks.length}
-      <div class="book-grid">{#each visibleBooks as book (book.id)}<article class="book-card"><a class="cover-link" href={`/buku/${book.id}`}><div class="cover-stage"><img src={book.cover} alt={`Sampul ${book.title}`} loading="lazy" width="260" height="360" /><Badge variant={book.listingType === 'JUAL' ? 'jual' : 'barter'}>{book.listingType === 'JUAL' ? 'DIJUAL' : 'BARTER'}</Badge></div></a><div class="book-info"><div class="book-heading"><div><a href={`/buku/${book.id}`}><h3>{book.title}</h3></a><p>{book.author}</p></div><button class="save" aria-label={`Simpan ${book.title}`}>Simpan</button></div><strong class="offer">{book.listingType === 'JUAL' ? formatPrice(book.price ?? 0) : book.wantedInExchange}</strong><div class="meta"><span>{book.condition}</span><span>{book.city}</span></div><div class="seller"><span class="avatar">{book.seller.charAt(0)}</span><span>{book.seller}</span><a href={`/buku/${book.id}`}>Lihat detail</a></div></div></article>{/each}</div>
-    {:else}
-      <div class="empty"><h3>Tidak ada buku yang cocok</h3><p>Ubah kata kunci atau hapus filter untuk melihat koleksi lain.</p><Button on:click={resetFilters}>Hapus semua filter</Button></div>
-    {/if}
-    <div class="pagination"><span>{filteredBooks.length ? `${(page - 1) * pageSize + 1}–${Math.min(page * pageSize, filteredBooks.length)} dari ${filteredBooks.length}` : '0 hasil'}</span><div><Button variant="secondary" size="sm" disabled={page === 1} on:click={() => (page -= 1)}>Sebelumnya</Button><strong>{page} / {totalPages}</strong><Button variant="secondary" size="sm" disabled={page === totalPages} on:click={() => (page += 1)}>Berikutnya</Button></div></div>
-  </section>
+	<section class="mx-auto max-w-6xl px-4 py-10" id="koleksi">
+		<div class="mb-6 flex items-end justify-between">
+			<div><p class="text-xs font-semibold uppercase tracking-widest text-primary">Koleksi komunitas</p><h2 class="text-2xl font-bold tracking-tight">Buku tersedia</h2></div>
+			<p class="text-sm text-muted-foreground">{filteredBooks.length} hasil</p>
+		</div>
 
-  <section class="how" id="cara-kerja"><p class="section-label">Cara kerja</p><div class="steps"><article><span>01</span><h2>Temukan buku</h2><p>Cari berdasarkan judul, kondisi, dan kota tempat COD.</p></article><article><span>02</span><h2>Chat pemilik</h2><p>Tanyakan detail kondisi dan sepakati waktu serta lokasi bertemu.</p></article><article><span>03</span><h2>Periksa dan tukar</h2><p>Temui di tempat umum. Periksa buku sebelum membayar atau menukar.</p></article></div></section>
+		{#if visibleBooks.length}
+			<div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+				{#each visibleBooks as book (book.id)}
+					<Card class="overflow-hidden">
+						<a href={`/buku/${book.id}`} class="relative block bg-muted">
+							<img src={book.cover} alt={`Sampul ${book.title}`} loading="lazy" class="mx-auto h-60 w-auto object-cover py-4" width="160" height="220" />
+							<Badge variant={book.listingType === 'JUAL' ? 'jual' : 'barter'} class="absolute left-3 top-3">{book.listingType === 'JUAL' ? 'DIJUAL' : 'BARTER'}</Badge>
+						</a>
+						<div class="space-y-2 p-4">
+							<a href={`/buku/${book.id}`} class="font-semibold leading-snug hover:underline">{book.title}</a>
+							<p class="text-sm text-muted-foreground">{book.author}</p>
+							<p class="text-sm font-semibold text-primary">{book.listingType === 'JUAL' ? formatPrice(book.price ?? 0) : book.wantedInExchange}</p>
+							<div class="flex gap-2 text-xs text-muted-foreground"><span class="rounded bg-secondary px-2 py-0.5">{book.condition}</span><span class="inline-flex items-center gap-1"><MapPin class="size-3" />{book.city}</span></div>
+							<div class="flex items-center gap-2 border-t pt-3 text-sm">
+								<Avatar name={book.seller} class="size-7" />
+								<span class="truncate text-muted-foreground">{book.seller}</span>
+								<a href={`/buku/${book.id}`} class="ml-auto inline-flex items-center gap-1 text-primary hover:underline">Detail <ArrowRight class="size-3" /></a>
+							</div>
+						</div>
+					</Card>
+				{/each}
+			</div>
+		{:else}
+			<Card class="p-10 text-center">
+				<h3 class="font-semibold">Tidak ada buku yang cocok</h3>
+				<p class="mt-1 text-sm text-muted-foreground">Ubah kata kunci atau hapus filter.</p>
+				<Button on:click={resetFilters} class="mt-4">Hapus semua filter</Button>
+			</Card>
+		{/if}
+
+		<div class="mt-8 flex items-center justify-between text-sm">
+			<span class="text-muted-foreground">{page} / {totalPages}</span>
+			<div class="flex gap-2">
+				<Button variant="outline" size="sm" disabled={page === 1} on:click={() => (page -= 1)}>Sebelumnya</Button>
+				<Button variant="outline" size="sm" disabled={page === totalPages} on:click={() => (page += 1)}>Berikutnya</Button>
+			</div>
+		</div>
+	</section>
+
+	<section class="bg-primary text-primary-foreground" id="cara-kerja">
+		<div class="mx-auto grid max-w-6xl gap-8 px-4 py-12 md:grid-cols-3">
+			{#each [['01', 'Temukan buku', 'Cari berdasarkan judul, kondisi, dan kota COD.'], ['02', 'Chat pemilik', 'Tanyakan detail dan sepakati waktu bertemu.'], ['03', 'Periksa dan tukar', 'Temui di tempat umum dan periksa buku.']] as [n, t, d]}
+				<div class="border-t border-white/20 pt-4"><p class="text-xs opacity-70">{n}</p><h2 class="mt-2 text-lg font-semibold">{t}</h2><p class="mt-1 text-sm opacity-80">{d}</p></div>
+			{/each}
+		</div>
+	</section>
 </main>
-
-<footer><a class="wordmark footer-mark" href="/"><span>TB</span>Tukarbuku</a><p>Pasar buku bekas untuk komunitas pembaca Indonesia.</p><div><a href="#koleksi">Koleksi</a><a href="#cara-kerja">Cara kerja</a><a href="/login">Masuk</a></div></footer>
-
-<style>
-  .site-header { height: 72px; padding: 0 clamp(20px, 5vw, 72px); display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); background: rgba(250,250,247,.96); position: sticky; top: 0; z-index: 10; }.wordmark { display: flex; gap: 10px; align-items: center; color: var(--ink); text-decoration: none; font-weight: 750; letter-spacing: -.03em; }.wordmark span { display: grid; place-items: center; width: 32px; height: 32px; background: var(--ink); color: white; font-size: 11px; letter-spacing: .04em; }.site-header nav { align-self: stretch; display: flex; gap: 28px; }.site-header nav a, .text-link { color: var(--stone); text-decoration: none; font-size: 14px; font-weight: 600; }.site-header nav a { position: relative; display: flex; align-items: center; }.site-header nav a::after { content: ''; position: absolute; right: 0; bottom: -1px; left: 0; height: 3px; background: transparent; }.site-header nav a:hover, .site-header nav a.nav-active { color: var(--ink); }.site-header nav a.nav-active::after { background: var(--leaf); }.header-actions { display: flex; align-items: center; gap: 20px; }.primary-small { background: var(--leaf); color: white; text-decoration: none; padding: 11px 16px; border-radius: 4px; font-size: 14px; font-weight: 700; }
-  .intro { min-height: 360px; padding: 72px clamp(20px, 8vw, 120px); background: #edf2ee; display: grid; grid-template-columns: 1fr 240px; align-items: end; gap: 40px; border-bottom: 1px solid var(--border); }.intro-copy { max-width: 760px; }.kicker, .section-label { margin: 0 0 18px; color: var(--leaf); text-transform: uppercase; letter-spacing: .12em; font-size: 12px; font-weight: 750; }.intro h1 { margin: 0; max-width: 730px; font-size: clamp(40px, 5.8vw, 76px); line-height: 1; letter-spacing: -.06em; font-weight: 760; }.intro-copy > p:last-child { max-width: 620px; margin: 28px 0 0; color: var(--stone); font-size: 17px; line-height: 1.7; }.catalog-mark { justify-self: end; width: 190px; min-height: 190px; padding: 18px; border: 1px solid #b9c8bf; display: flex; flex-direction: column; }.catalog-mark span, .catalog-mark small { color: var(--stone); font-size: 11px; letter-spacing: .1em; }.catalog-mark strong { font-size: 76px; line-height: 1; letter-spacing: -.08em; margin: auto 0; }.catalog-mark small { letter-spacing: 0; }
-  .search-panel { margin: -1px auto 0; max-width: 1320px; padding: 20px clamp(20px, 4vw, 56px); display: grid; grid-template-columns: minmax(280px, 1fr) auto 180px 180px auto; gap: 10px; background: white; border-bottom: 1px solid var(--border); }.search-input, .select-control { height: 54px; padding: 7px 14px; border: 1px solid var(--border); border-radius: 4px; display: flex; flex-direction: column; justify-content: center; }.search-input span, .select-control span { color: var(--stone); font-size: 10px; font-weight: 750; text-transform: uppercase; letter-spacing: .08em; }.select-control { position: relative; transition: border-color .15s ease, box-shadow .15s ease; }.select-control::after { content: ''; position: absolute; right: 15px; bottom: 16px; width: 7px; height: 7px; border-right: 2px solid var(--stone); border-bottom: 2px solid var(--stone); transform: rotate(45deg); pointer-events: none; }.select-control:focus-within { border-color: var(--leaf); box-shadow: 0 0 0 3px rgba(40,96,68,.1); }.type-tabs { display: flex; border: 1px solid var(--border); padding: 4px; border-radius: 4px; }.type-tabs button { min-width: 68px; border: 0; border-radius: 3px; background: transparent; color: var(--stone); font-size: 13px; font-weight: 700; }.type-tabs button.active { background: var(--ink); color: white; }
-  .catalog { max-width: 1320px; margin: auto; padding: 64px clamp(20px, 4vw, 56px) 88px; }.catalog-head { display: flex; justify-content: space-between; align-items: end; margin-bottom: 30px; }.catalog-head .section-label { margin-bottom: 8px; }.catalog-head h2 { font-size: 32px; letter-spacing: -.04em; margin: 0; }.catalog-head > p { color: var(--stone); font-size: 13px; }.book-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 44px 24px; align-items: stretch; }.book-card { min-width: 0; height: 100%; display: grid; grid-template-rows: 300px 1fr; }.cover-link { display: block; height: 300px; }.cover-stage { position: relative; width: 100%; height: 300px; background: #eef0ec; display: grid; place-items: center; border: 1px solid #e5e9e5; }.cover-stage img { width: 155px; height: 220px; object-fit: cover; box-shadow: 7px 9px 18px rgba(23,33,27,.18); transition: transform .18s ease; }.book-card:hover .cover-stage img { transform: translateY(-4px); }.cover-stage > :global(.ui-badge) { position: absolute; top: 12px; left: 12px; }.book-info { height: 100%; padding-top: 16px; display: flex; flex-direction: column; }.book-heading { display: flex; justify-content: space-between; gap: 12px; }.book-heading a { color: inherit; text-decoration: none; }.book-heading h3 { margin: 0; font-size: 18px; line-height: 1.3; letter-spacing: -.02em; }.book-heading p { margin: 4px 0 0; color: var(--stone); font-size: 13px; }.save { flex: none; align-self: start; border: 0; background: transparent; color: var(--stone); text-decoration: underline; font-size: 12px; padding: 2px; }.offer { display: block; min-height: 42px; margin-top: 15px; color: var(--leaf); font-size: 14px; line-height: 1.45; }.meta { display: flex; gap: 8px; margin: 8px 0 14px; }.meta span { background: var(--muted); color: #4c5c53; padding: 5px 8px; border-radius: 3px; font-size: 11px; font-weight: 700; }.seller { min-height: 42px; margin-top: auto; padding-top: 12px; border-top: 1px solid var(--border); display: flex; align-items: center; gap: 8px; color: var(--stone); font-size: 12px; }.avatar { display: grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; background: #dfe7e1; color: var(--leaf); font-weight: 800; }.seller a { margin-left: auto; color: var(--ink); font-weight: 700; }.empty { padding: 70px 20px; text-align: center; border: 1px solid var(--border); background: white; }.empty h3 { margin: 0 0 8px; font-size: 22px; }.empty p { color: var(--stone); }.pagination { display: flex; justify-content: space-between; align-items: center; margin-top: 44px; padding-top: 20px; border-top: 1px solid var(--border); color: var(--stone); font-size: 13px; }.pagination div { display: flex; align-items: center; gap: 16px; }
-  .how { background: var(--ink); color: white; padding: 64px clamp(20px, 8vw, 120px) 72px; }.how .section-label { color: #8fbaa2; }.steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 60px; }.steps article { border-top: 1px solid #4a564f; padding-top: 18px; }.steps span { color: #8fbaa2; font-size: 12px; }.steps h2 { margin: 32px 0 10px; font-size: 22px; }.steps p { margin: 0; color: #b9c3bd; font-size: 14px; line-height: 1.7; } footer { min-height: 120px; padding: 32px clamp(20px, 5vw, 72px); display: flex; align-items: center; gap: 32px; border-top: 1px solid var(--border); }.footer-mark span { background: var(--leaf); }.footer-mark + p { color: var(--stone); font-size: 13px; }.footer-mark ~ div { margin-left: auto; display: flex; gap: 24px; }.footer-mark ~ div a { color: var(--stone); font-size: 13px; text-decoration: none; }
-  @media (max-width: 960px) { .search-panel { grid-template-columns: 1fr 1fr; }.search-input { grid-column: 1 / -1; }.type-tabs { min-height: 54px; }.book-grid { grid-template-columns: repeat(2, 1fr); }.catalog-mark { display: none; }.intro { grid-template-columns: 1fr; } }
-  @media (max-width: 620px) { .site-header { height: 64px; padding: 0 16px; }.site-header nav, .text-link { display: none; }.primary-small { padding: 10px 12px; }.intro { min-height: 0; padding: 44px 20px 36px; }.intro h1 { font-size: 40px; }.intro-copy > p:last-child { margin-top: 20px; font-size: 15px; }.search-panel { position: static; padding: 14px 16px; grid-template-columns: 1fr; }.search-input, .type-tabs { grid-column: 1 / -1; }.type-tabs { min-height: 50px; overflow-x: auto; }.select-control { display: flex; min-width: 0; }.search-panel { grid-template-columns: 1fr 1fr; }.catalog { padding: 44px 16px 64px; }.book-grid { grid-template-columns: 1fr; gap: 0; }.book-card { height: auto; display: grid; grid-template-columns: 104px 1fr; grid-template-rows: 146px; gap: 14px; padding: 18px 0; border-top: 1px solid var(--border); }.cover-link, .cover-stage { height: 146px; }.cover-stage img { width: 82px; height: 116px; box-shadow: 3px 5px 10px rgba(23,33,27,.16); }.book-info { padding: 0; min-width: 0; }.book-heading h3 { font-size: 16px; }.save { display: none; }.offer { min-height: 0; margin-top: 10px; font-size: 13px; }.meta { margin: 8px 0; flex-wrap: wrap; }.seller { padding-top: 8px; }.seller a { display: none; }.pagination { align-items: flex-start; gap: 10px; }.pagination div { gap: 7px; }.steps { grid-template-columns: 1fr; gap: 36px; }.steps h2 { margin-top: 18px; } footer { align-items: flex-start; flex-direction: column; }.footer-mark ~ div { margin-left: 0; flex-wrap: wrap; } }
-</style>

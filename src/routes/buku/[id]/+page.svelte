@@ -1,40 +1,81 @@
 <script lang="ts">
-  import type { PageData } from './$types';
-  export let data: PageData;
-  let saved = false;
-  const price = data.book.listingType === 'JUAL' ? new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(data.book.price ?? 0) : data.book.wantedInExchange;
+	import type { PageData } from './$types';
+	import Badge from '$lib/components/ui/badge.svelte';
+	import Avatar from '$lib/components/ui/avatar.svelte';
+	import Card from '$lib/components/ui/card.svelte';
+	import Button from '$lib/components/ui/button.svelte';
+	let { data }: { data: PageData } = $props();
+	let saved = $state(false);
+	let price = $derived(data.book.listingType === 'JUAL'
+		? new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(data.book.price ?? 0)
+		: data.book.wantedInExchange);
 </script>
 
 <svelte:head>
-  <title>{data.book.title} oleh {data.book.author} — Tukarbuku</title>
-  <meta name="description" content={`${data.book.title} oleh ${data.book.author}, kondisi ${data.book.condition}, tersedia di ${data.book.city}.`} />
+	<title>{data.book.title} oleh {data.book.author} — Tukarbuku</title>
+	<meta name="description" content={`${data.book.title} oleh ${data.book.author}, kondisi ${data.book.condition}, tersedia di ${data.book.city}.`} />
 </svelte:head>
 
-<header class="site-header"><a class="wordmark" href="/"><span>TB</span>Tukarbuku</a><nav><a class="nav-active" href="/#koleksi" aria-current="page">Koleksi</a><a href="/#cara-kerja">Cara kerja</a></nav><div><a class="login" href={`/login?redirectTo=/buku/${data.book.id}`}>Masuk</a><a class="sell" href="/dashboard/buku-baru">Pasang buku</a></div></header>
+<div class="mx-auto max-w-6xl px-4 py-8">
+	<nav class="flex gap-2 text-xs text-muted-foreground" aria-label="Breadcrumb"><a href="/" class="text-primary">Koleksi</a><span>/</span><span class="truncate">{data.book.title}</span></nav>
 
-<main class="detail-shell">
-  <nav class="breadcrumb" aria-label="Breadcrumb"><a href="/">Koleksi</a><span>/</span><span>{data.book.title}</span></nav>
-  <div class="detail-grid">
-    <section class="gallery"><div class="cover-stage"><img src={data.book.cover} alt={`Sampul ${data.book.title}`} width="360" height="500" /></div><div class="thumbnail-row"><button class="selected"><img src={data.book.cover} alt="Tampilan sampul depan" /></button><div><strong>1 foto</strong><span>Diunggah pemilik</span></div></div></section>
-    <section class="listing-detail">
-      <div class="listing-top"><span class="listing-label {data.book.listingType.toLowerCase()}">{data.book.listingType === 'JUAL' ? 'DIJUAL' : 'BARTER'}</span><button class:saved on:click={() => (saved = !saved)}>{saved ? 'Tersimpan' : 'Simpan buku'}</button></div>
-      <h1>{data.book.title}</h1><p class="author">{data.book.author}</p>
-      <div class="offer"><span>{data.book.listingType === 'JUAL' ? 'Harga' : 'Dicari sebagai pengganti'}</span><strong>{price}</strong></div>
-      <dl class="facts"><div><dt>Kondisi</dt><dd>{data.book.condition}</dd></div><div><dt>Lokasi COD</dt><dd>{data.book.city}</dd></div><div><dt>Status</dt><dd><span class="status-dot"></span> Tersedia</dd></div><div><dt>Diposting</dt><dd>Baru-baru ini</dd></div></dl>
-      <section class="condition-note"><h2>Catatan kondisi</h2><p>Buku masih layak dibaca dan siap berpindah tangan. Tanyakan detail noda, lipatan, atau coretan kepada pemilik melalui chat sebelum membuat kesepakatan.</p></section>
-      <section class="seller-card"><div class="seller-avatar">{data.book.seller.charAt(0)}</div><div><span>Pemilik buku</span><strong>{data.book.seller}</strong><small>{data.book.city}</small></div><a href={`/login?redirectTo=/buku/${data.book.id}`}>Lihat profil</a></section>
-      <a class="primary-action" href={`/login?redirectTo=/buku/${data.book.id}`}>{data.book.listingType === 'JUAL' ? 'Chat penjual' : 'Ajukan barter'}</a>
-      <p class="login-note">Masuk dengan Google untuk memulai percakapan.</p>
-    </section>
-  </div>
-  <section class="safety"><div><p>PANDUAN TRANSAKSI</p><h2>Periksa sebelum sepakat.</h2></div><ul><li><strong>Bertemu di tempat umum.</strong><span>Pilih lokasi ramai dan waktu yang aman.</span></li><li><strong>Periksa kondisi buku.</strong><span>Pastikan sesuai foto dan deskripsi.</span></li><li><strong>Tetap gunakan chat.</strong><span>Simpan riwayat kesepakatan di Tukarbuku.</span></li></ul></section>
-</main>
+	<div class="mt-6 grid gap-10 md:grid-cols-2">
+		<section>
+			<div class="grid h-[480px] place-items-center rounded-xl border bg-muted/50">
+				<img src={data.book.cover} alt={`Sampul ${data.book.title}`} width="360" height="500" class="h-96 w-64 object-cover shadow-lg" />
+			</div>
+			<div class="mt-3 flex items-center gap-3 text-xs text-muted-foreground">
+				<img src={data.book.cover} alt="Tampilan sampul depan" class="h-16 w-12 rounded border object-cover" />
+				<div><p class="font-semibold text-foreground">1 foto</p><p>Diunggah pemilik</p></div>
+			</div>
+		</section>
 
-<div class="mobile-action"><div><span>{data.book.listingType === 'JUAL' ? 'Harga' : 'Barter'}</span><strong>{price}</strong></div><a href={`/login?redirectTo=/buku/${data.book.id}`}>{data.book.listingType === 'JUAL' ? 'Chat penjual' : 'Ajukan barter'}</a></div>
-<footer><a class="wordmark" href="/"><span>TB</span>Tukarbuku</a><p>Pasar buku bekas untuk komunitas pembaca Indonesia.</p></footer>
+		<section>
+			<div class="flex items-center justify-between">
+				<Badge variant={data.book.listingType === 'JUAL' ? 'jual' : 'barter'}>{data.book.listingType === 'JUAL' ? 'DIJUAL' : 'BARTER'}</Badge>
+				<Button variant="link" size="sm" onclick={() => (saved = !saved)}>{saved ? 'Tersimpan' : 'Simpan buku'}</Button>
+			</div>
+			<h1 class="mt-4 text-4xl font-bold tracking-tight md:text-5xl">{data.book.title}</h1>
+			<p class="mt-1 text-muted-foreground">{data.book.author}</p>
 
-<style>
-  .site-header { height:72px; padding:0 clamp(20px,5vw,72px); display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid var(--border); background:rgba(250,250,247,.96); position:sticky; top:0; z-index:10 }.wordmark{display:flex;gap:10px;align-items:center;color:var(--ink);text-decoration:none;font-weight:750}.wordmark span{display:grid;place-items:center;width:32px;height:32px;background:var(--ink);color:white;font-size:11px}.site-header nav{align-self:stretch;display:flex;gap:28px}.site-header nav a,.login{color:var(--stone);text-decoration:none;font-size:14px;font-weight:600}.site-header nav a{position:relative;display:flex;align-items:center}.site-header nav a::after{content:'';position:absolute;right:0;bottom:-1px;left:0;height:3px;background:transparent}.site-header nav a:hover,.site-header nav a.nav-active{color:var(--ink)}.site-header nav a.nav-active::after{background:var(--leaf)}.site-header>div{display:flex;align-items:center;gap:20px}.sell{padding:11px 16px;background:var(--leaf);color:white;border-radius:4px;text-decoration:none;font-size:14px;font-weight:700}
-  .detail-shell{max-width:1220px;margin:auto;padding:32px clamp(20px,5vw,64px) 84px}.breadcrumb{display:flex;gap:9px;color:var(--stone);font-size:12px;white-space:nowrap;overflow:hidden}.breadcrumb a{color:var(--leaf)}.breadcrumb span:last-child{overflow:hidden;text-overflow:ellipsis}.detail-grid{display:grid;grid-template-columns:minmax(360px,520px) minmax(360px,1fr);gap:clamp(48px,8vw,100px);margin-top:28px}.cover-stage{height:570px;display:grid;place-items:center;background:#eef0ec;border:1px solid #e3e7e3}.cover-stage img{width:270px;height:385px;object-fit:cover;box-shadow:10px 14px 24px rgba(23,33,27,.19)}.thumbnail-row{display:flex;align-items:center;gap:13px;margin-top:14px}.thumbnail-row button{width:58px;height:72px;padding:4px;background:white;border:1px solid var(--leaf)}.thumbnail-row img{width:100%;height:100%;object-fit:cover}.thumbnail-row div{display:flex;flex-direction:column;font-size:12px}.thumbnail-row span{color:var(--stone)}.listing-top{display:flex;justify-content:space-between;align-items:center}.listing-top button{border:0;background:transparent;color:var(--stone);text-decoration:underline;font-size:12px}.listing-top button.saved{color:var(--orange)}.listing-label{padding:5px 8px;border-radius:2px;font-size:10px;font-weight:800;letter-spacing:.08em}.listing-label.jual{background:#fff0e9;color:#b9491d}.listing-label.barter{background:#dcebe3;color:#1f6243}.listing-detail h1{margin:24px 0 6px;font-size:clamp(38px,5vw,62px);line-height:1.02;letter-spacing:-.06em}.author{margin:0 0 28px;color:var(--stone);font-size:16px}.offer{padding:20px 0;border-top:1px solid var(--border);border-bottom:1px solid var(--border);display:flex;flex-direction:column;gap:5px}.offer span{color:var(--stone);font-size:11px;text-transform:uppercase;letter-spacing:.08em;font-weight:750}.offer strong{color:var(--leaf);font-size:22px}.facts{display:grid;grid-template-columns:1fr 1fr;margin:0;border-bottom:1px solid var(--border)}.facts div{padding:16px 0;border-bottom:1px solid var(--border)}.facts div:nth-last-child(-n+2){border-bottom:0}.facts dt{color:var(--stone);font-size:11px}.facts dd{margin:5px 0 0;font-size:13px;font-weight:700}.status-dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:#38a169;margin-right:5px}.condition-note{padding:24px 0}.condition-note h2{margin:0 0 9px;font-size:17px}.condition-note p{margin:0;color:var(--stone);font-size:13px;line-height:1.75}.seller-card{padding:16px;background:#edf2ee;display:flex;align-items:center;gap:12px}.seller-avatar{width:42px;height:42px;display:grid;place-items:center;border-radius:50%;background:#d4e2d9;color:var(--leaf);font-weight:800}.seller-card>div:nth-child(2){display:flex;flex-direction:column}.seller-card span,.seller-card small{color:var(--stone);font-size:11px}.seller-card strong{font-size:14px}.seller-card a{margin-left:auto;color:var(--leaf);font-size:12px;font-weight:700}.primary-action{min-height:50px;margin-top:18px;display:flex;align-items:center;justify-content:center;background:var(--leaf);color:white;border-radius:4px;text-decoration:none;font-size:14px;font-weight:750}.primary-action:hover{background:var(--leaf-dark)}.login-note{text-align:center;color:var(--stone);font-size:12px}.safety{margin-top:80px;padding:34px 0;border-top:2px solid var(--ink);border-bottom:1px solid var(--border);display:grid;grid-template-columns:1fr 2fr;gap:60px}.safety p{margin:0 0 10px;color:var(--leaf);font-size:11px;font-weight:800;letter-spacing:.1em}.safety h2{margin:0;font-size:28px;letter-spacing:-.04em}.safety ul{display:grid;grid-template-columns:repeat(3,1fr);gap:25px;margin:0;padding:0;list-style:none}.safety li{display:flex;flex-direction:column;gap:6px}.safety li strong{font-size:13px}.safety li span{color:var(--stone);font-size:12px;line-height:1.6}.mobile-action{display:none}footer{min-height:110px;padding:28px clamp(20px,5vw,72px);border-top:1px solid var(--border);display:flex;align-items:center;gap:28px}footer p{color:var(--stone);font-size:13px}
-  @media(max-width:800px){.site-header{height:64px;padding:0 16px}.site-header nav,.login{display:none}.sell{padding:9px 11px}.detail-shell{padding:24px 16px 120px}.detail-grid{grid-template-columns:1fr;gap:28px}.cover-stage{height:min(125vw,500px)}.cover-stage img{width:220px;height:315px}.listing-detail h1{font-size:40px}.primary-action,.login-note{display:none}.safety{margin-top:52px;grid-template-columns:1fr;gap:28px}.safety ul{grid-template-columns:1fr;gap:20px}.mobile-action{position:fixed;z-index:20;bottom:0;left:0;right:0;display:flex;align-items:center;justify-content:space-between;gap:15px;padding:12px 16px;background:white;border-top:1px solid var(--border)}.mobile-action div{min-width:0;display:flex;flex-direction:column}.mobile-action span{color:var(--stone);font-size:10px}.mobile-action strong{max-width:170px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px}.mobile-action a{min-height:46px;padding:0 18px;display:flex;align-items:center;background:var(--leaf);color:white;border-radius:4px;text-decoration:none;font-size:13px;font-weight:750}footer{display:none}}
-</style>
+			<div class="mt-6 flex flex-col gap-1 border-y py-4">
+				<span class="text-xs font-bold uppercase tracking-widest text-muted-foreground">{data.book.listingType === 'JUAL' ? 'Harga' : 'Dicari sebagai pengganti'}</span>
+				<strong class="text-2xl text-primary">{price}</strong>
+			</div>
+
+			<dl class="grid grid-cols-2 border-b text-sm">
+				<div class="border-b py-3"><dt class="text-xs text-muted-foreground">Kondisi</dt><dd class="font-medium">{data.book.condition}</dd></div>
+				<div class="border-b py-3"><dt class="text-xs text-muted-foreground">Lokasi COD</dt><dd class="font-medium">{data.book.city}</dd></div>
+				<div class="py-3"><dt class="text-xs text-muted-foreground">Status</dt><dd class="font-medium">● Tersedia</dd></div>
+				<div class="py-3"><dt class="text-xs text-muted-foreground">Diposting</dt><dd class="font-medium">Baru-baru ini</dd></div>
+			</dl>
+
+			<Card class="mt-4 bg-muted/50 p-5">
+				<h2 class="font-semibold">Catatan kondisi</h2>
+				<p class="mt-1 text-sm text-muted-foreground">Buku masih layak dibaca dan siap berpindah tangan. Tanyakan detail noda, lipatan, atau coretan kepada pemilik melalui chat.</p>
+			</Card>
+
+			<Card class="mt-4 flex items-center gap-3 p-4">
+				<Avatar name={data.book.seller} />
+				<div class="min-w-0 flex-1">
+					<p class="text-xs text-muted-foreground">Pemilik buku</p>
+					<p class="truncate text-sm font-bold">{data.book.seller}</p>
+					<p class="text-xs text-muted-foreground">{data.book.city}</p>
+				</div>
+				<Button href={`/login?redirectTo=/buku/${data.book.id}`} variant="outline" size="sm">Lihat profil</Button>
+			</Card>
+
+			<Button href={`/login?redirectTo=/buku/${data.book.id}`} size="lg" class="mt-4 w-full">{data.book.listingType === 'JUAL' ? 'Chat penjual' : 'Ajukan barter'}</Button>
+			<p class="mt-2 text-center text-xs text-muted-foreground">Masuk dengan Google untuk memulai percakapan.</p>
+		</section>
+	</div>
+
+	<Card class="mt-12 grid gap-6 bg-muted/50 p-6 md:grid-cols-[240px_1fr]">
+		<div><p class="text-xs font-bold uppercase tracking-widest text-primary">Panduan transaksi</p><h2 class="text-xl font-bold">Periksa sebelum sepakat.</h2></div>
+		<ul class="grid gap-4 text-sm md:grid-cols-3">
+			<li><p class="font-semibold">Bertemu di tempat umum.</p><p class="text-muted-foreground">Pilih lokasi ramai dan waktu yang aman.</p></li>
+			<li><p class="font-semibold">Periksa kondisi buku.</p><p class="text-muted-foreground">Pastikan sesuai foto dan deskripsi.</p></li>
+			<li><p class="font-semibold">Tetap gunakan chat.</p><p class="text-muted-foreground">Simpan riwayat kesepakatan di Tukarbuku.</p></li>
+		</ul>
+	</Card>
+</div>

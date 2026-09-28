@@ -1,26 +1,5 @@
 <script lang="ts">
-  export let value = '';
-  export let type = 'text';
-  export let name: string | undefined = undefined;
-  export let id: string | undefined = undefined;
-  export let placeholder = '';
-  export let required = false;
-  export let disabled = false;
-  export let autocomplete: 'name' | 'email' | 'tel' | 'url' | 'username' | 'new-password' | 'current-password' | undefined = undefined;
-  export let ariaLabel: string | undefined = undefined;
-  export let className = '';
-
+	import { cn } from '$lib/utils.js';
+	let { class: className, value = $bindable(''), ref = $bindable(null), ...rest }: any = $props();
 </script>
-
-<input
-  bind:value
-  {type}
-  {name}
-  {id}
-  {placeholder}
-  {required}
-  {disabled}
-  {autocomplete}
-  aria-label={ariaLabel}
-  class={`ui-input ${className}`}}
-/>
+<input bind:this={ref} bind:value class={cn('flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-xs outline-none placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring/40 disabled:opacity-50', className)} {...rest} />
