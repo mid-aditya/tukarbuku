@@ -4,51 +4,47 @@
 
 @theme {
 	--font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
-	--color-leaf-50: #eef5f0;
-	--color-leaf-100: #dcebe3;
-	--color-leaf-600: #286044;
-	--color-leaf-700: #1f4b36;
 }
 
 :root {
-	--background: 60 9% 98%;
-	--foreground: 150 18% 14%;
+	--background: 0 0% 100%;
+	--foreground: 0 0% 9%;
 	--card: 0 0% 100%;
-	--card-foreground: 150 18% 14%;
-	--muted: 140 10% 94%;
-	--muted-foreground: 150 8% 42%;
-	--border: 140 12% 87%;
-	--input: 140 12% 80%;
-	--primary: 152 45% 26%;
-	--primary-foreground: 60 9% 98%;
-	--secondary: 140 12% 93%;
-	--secondary-foreground: 150 18% 16%;
-	--accent: 38 92% 50%;
-	--accent-foreground: 150 18% 14%;
-	--destructive: 8 65% 42%;
+	--card-foreground: 0 0% 9%;
+	--muted: 0 0% 96%;
+	--muted-foreground: 0 0% 45%;
+	--border: 0 0% 90%;
+	--input: 0 0% 83%;
+	--primary: 22 96% 52%;
+	--primary-foreground: 0 0% 100%;
+	--secondary: 0 0% 96%;
+	--secondary-foreground: 0 0% 9%;
+	--accent: 22 96% 52%;
+	--accent-foreground: 0 0% 100%;
+	--destructive: 0 72% 51%;
 	--destructive-foreground: 0 0% 100%;
-	--ring: 152 45% 26%;
-	--radius: 0.625rem;
+	--ring: 22 96% 52%;
+	--radius: 0.75rem;
 }
 
 .dark {
-	--background: 152 14% 9%;
-	--foreground: 70 12% 93%;
-	--card: 152 12% 12.5%;
-	--card-foreground: 70 12% 93%;
-	--muted: 152 10% 16%;
-	--muted-foreground: 140 10% 68%;
-	--border: 152 10% 21%;
-	--input: 152 10% 26%;
-	--primary: 160 55% 52%;
-	--primary-foreground: 152 30% 8%;
-	--secondary: 152 10% 17%;
-	--secondary-foreground: 70 12% 93%;
-	--accent: 38 92% 55%;
-	--accent-foreground: 152 30% 8%;
-	--destructive: 8 70% 58%;
-	--destructive-foreground: 152 30% 8%;
-	--ring: 160 55% 52%;
+	--background: 0 0% 8%;
+	--foreground: 0 0% 96%;
+	--card: 0 0% 12%;
+	--card-foreground: 0 0% 96%;
+	--muted: 0 0% 16%;
+	--muted-foreground: 0 0% 68%;
+	--border: 0 0% 20%;
+	--input: 0 0% 26%;
+	--primary: 24 100% 58%;
+	--primary-foreground: 0 0% 10%;
+	--secondary: 0 0% 16%;
+	--secondary-foreground: 0 0% 96%;
+	--accent: 24 100% 58%;
+	--accent-foreground: 0 0% 10%;
+	--destructive: 0 72% 60%;
+	--destructive-foreground: 0 0% 10%;
+	--ring: 24 100% 58%;
 }
 
 @theme inline {

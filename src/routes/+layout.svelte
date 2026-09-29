@@ -69,8 +69,8 @@
 
 <header class="sticky top-0 z-40 border-b bg-background/95 backdrop-blur">
 	<div class="mx-auto flex h-16 max-w-7xl items-center gap-3 px-4">
-		<a href="/" class="flex shrink-0 items-center gap-2 text-lg font-black uppercase tracking-tight" aria-label="Tukarbuku beranda">
-			<span class="grid size-9 place-items-center rounded-xl bg-primary text-primary-foreground">
+		<a href="/" class="flex shrink-0 items-center gap-2 text-lg font-extrabold tracking-tight" aria-label="Tukarbuku beranda">
+			<span class="grid size-9 place-items-center rounded-lg bg-foreground text-background">
 				<BookOpenText class="size-4" />
 			</span>
 			<span class="hidden lg:inline">Tukarbuku</span>
@@ -151,7 +151,7 @@
 				<a
 					href={n.href}
 					aria-current={isActive(n.href) ? 'page' : undefined}
-					class="inline-flex shrink-0 items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-bold uppercase tracking-wide transition-colors {isActive(n.href) ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-muted hover:text-foreground'}"
+					class="inline-flex shrink-0 items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-bold uppercase tracking-wide transition-colors {isActive(n.href) ? 'bg-foreground text-background' : 'text-muted-foreground hover:bg-muted hover:text-foreground'}"
 				>
 					{n.label}
 				</a>

@@ -7,10 +7,10 @@
 				default: 'border-transparent bg-primary text-primary-foreground',
 				secondary: 'border-transparent bg-secondary text-secondary-foreground',
 				outline: 'text-foreground',
-				success: 'border-transparent bg-emerald-100 text-emerald-800',
-				warning: 'border-transparent bg-amber-100 text-amber-800',
-				jual: 'border-transparent bg-orange-100 text-orange-800',
-				barter: 'border-transparent bg-emerald-100 text-emerald-800'
+				success: 'border-transparent bg-foreground text-background',
+				warning: 'border-transparent bg-primary/15 text-primary',
+				jual: 'border-transparent bg-primary text-primary-foreground',
+				barter: 'border-transparent bg-foreground text-background'
 			}
 		},
 		defaultVariants: { variant: 'default' }
