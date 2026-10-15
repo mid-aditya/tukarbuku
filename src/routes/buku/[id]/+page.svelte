@@ -17,7 +17,7 @@
 </svelte:head>
 
 <div class="mx-auto max-w-6xl px-4 py-8">
-	<nav class="flex gap-2 text-xs text-muted-foreground" aria-label="Breadcrumb"><a href="/" class="text-primary">Koleksi</a><span>/</span><span class="truncate">{data.book.title}</span></nav>
+	<nav class="flex gap-2 text-xs text-muted-foreground" aria-label="Breadcrumb"><a href="/koleksi" class="text-primary">Koleksi</a><span>/</span><span class="truncate">{data.book.title}</span></nav>
 
 	<div class="mt-6 grid gap-10 md:grid-cols-2">
 		<section>

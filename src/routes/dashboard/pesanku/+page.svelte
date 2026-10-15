@@ -47,7 +47,7 @@
 			<Card class="mt-6 p-12 text-center">
 				<h2 class="text-lg font-bold">Belum ada percakapan</h2>
 				<p class="mt-1 text-sm text-muted-foreground">Mulai chat dari halaman detail buku untuk menghubungi penjual atau pembeli.</p>
-				<Button href="/" class="mt-4">Telusuri koleksi</Button>
+				<Button href="/koleksi" class="mt-4">Telusuri koleksi</Button>
 			</Card>
 		{:else}
 			<Card class="mt-6 divide-y p-0">
