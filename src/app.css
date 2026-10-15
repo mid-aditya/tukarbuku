@@ -3,28 +3,30 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 @theme {
-	--font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
+	--font-sans: 'Geist', 'Inter', ui-sans-serif, system-ui, sans-serif;
 }
 
 :root {
-	--background: 0 0% 100%;
-	--foreground: 0 0% 9%;
+	--background: 40 7% 97%;
+	--foreground: 0 0% 11%;
 	--card: 0 0% 100%;
-	--card-foreground: 0 0% 9%;
-	--muted: 0 0% 96%;
-	--muted-foreground: 0 0% 45%;
-	--border: 0 0% 90%;
-	--input: 0 0% 83%;
-	--primary: 22 96% 52%;
-	--primary-foreground: 0 0% 100%;
-	--secondary: 0 0% 96%;
-	--secondary-foreground: 0 0% 9%;
-	--accent: 22 96% 52%;
-	--accent-foreground: 0 0% 100%;
+	--card-foreground: 0 0% 11%;
+	--muted: 40 6% 90%;
+	--muted-foreground: 0 0% 42%;
+	--border: 40 5% 86%;
+	--input: 40 6% 88%;
+	--header: 40 8% 94%;
+	--primary: 14 100% 63%;
+	--primary-foreground: 0 0% 11%;
+	--secondary: 40 6% 92%;
+	--secondary-foreground: 0 0% 11%;
+	--accent: 14 100% 63%;
+	--accent-foreground: 0 0% 11%;
 	--destructive: 0 72% 51%;
 	--destructive-foreground: 0 0% 100%;
-	--ring: 22 96% 52%;
-	--radius: 0.75rem;
+	--ring: 14 100% 63%;
+	--radius: 0.25rem;
+	--deal: 45 100% 51%;
 }
 
 .dark {
@@ -35,16 +37,17 @@
 	--muted: 0 0% 16%;
 	--muted-foreground: 0 0% 68%;
 	--border: 0 0% 20%;
-	--input: 0 0% 26%;
-	--primary: 24 100% 58%;
-	--primary-foreground: 0 0% 10%;
+	--input: 0 0% 22%;
+	--header: 0 0% 10%;
+	--primary: 14 100% 63%;
+	--primary-foreground: 0 0% 11%;
 	--secondary: 0 0% 16%;
 	--secondary-foreground: 0 0% 96%;
-	--accent: 24 100% 58%;
-	--accent-foreground: 0 0% 10%;
+	--accent: 14 100% 63%;
+	--accent-foreground: 0 0% 11%;
 	--destructive: 0 72% 60%;
 	--destructive-foreground: 0 0% 10%;
-	--ring: 24 100% 58%;
+	--ring: 14 100% 63%;
 }
 
 @theme inline {
@@ -56,6 +59,7 @@
 	--color-muted-foreground: hsl(var(--muted-foreground));
 	--color-border: hsl(var(--border));
 	--color-input: hsl(var(--input));
+	--color-header: hsl(var(--header));
 	--color-primary: hsl(var(--primary));
 	--color-primary-foreground: hsl(var(--primary-foreground));
 	--color-secondary: hsl(var(--secondary));
@@ -64,6 +68,7 @@
 	--color-accent-foreground: hsl(var(--accent-foreground));
 	--color-destructive: hsl(var(--destructive));
 	--color-ring: hsl(var(--ring));
+	--color-deal: hsl(var(--deal));
 }
 
 @layer base {

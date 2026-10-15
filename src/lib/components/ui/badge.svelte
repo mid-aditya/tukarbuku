@@ -9,8 +9,9 @@
 				outline: 'text-foreground',
 				success: 'border-transparent bg-foreground text-background',
 				warning: 'border-transparent bg-primary/15 text-primary',
-				jual: 'border-transparent bg-primary text-primary-foreground',
-				barter: 'border-transparent bg-foreground text-background'
+				jual: 'border-transparent bg-foreground text-background',
+				barter: 'border-transparent bg-primary text-primary-foreground',
+				deal: 'border-transparent bg-deal text-foreground'
 			}
 		},
 		defaultVariants: { variant: 'default' }

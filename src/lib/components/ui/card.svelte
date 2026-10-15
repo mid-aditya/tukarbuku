@@ -2,6 +2,6 @@
 	import { cn } from '$lib/utils.js';
 	let { class: className, children, ...rest }: any = $props();
 </script>
-<div class={cn('rounded-xl border bg-card text-card-foreground shadow-sm', className)} {...rest}>
+<div class={cn('rounded-sm border bg-card text-card-foreground shadow-sm', className)} {...rest}>
 	{@render children?.()}
 </div>

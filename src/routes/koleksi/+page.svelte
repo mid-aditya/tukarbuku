@@ -81,20 +81,20 @@
 			<p class="inline-flex items-center gap-1.5 text-xs font-black uppercase tracking-widest text-primary">
 				<LibraryBig class="size-4" /> Koleksi komunitas
 			</p>
-			<h1 class="mt-1 text-3xl font-black uppercase tracking-tight md:text-4xl">Jelajahi buku</h1>
+			<h1 class="mt-1 text-3xl font-bold tracking-tight md:text-4xl">Jelajahi buku</h1>
 		</div>
 		<p class="rounded-full bg-secondary px-3 py-1 text-sm font-bold">{filtered.length} hasil</p>
 	</div>
 
 	<!-- Toolbar -->
-	<div class="mt-6 flex flex-col gap-3 rounded-2xl border bg-card p-3 md:flex-row md:items-center">
+	<div class="mt-6 flex flex-col gap-3 rounded-sm border bg-card p-3 md:flex-row md:items-center">
 		<div class="relative flex-1">
 			<Search class="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-			<Input bind:value={query} type="search" placeholder="Cari judul atau penulis…" class="rounded-xl pl-9" />
+			<Input bind:value={query} type="search" placeholder="Cari judul atau penulis…" class="rounded-sm pl-9" />
 		</div>
 		<div class="flex flex-wrap items-center gap-2">
 			<div class="flex rounded-xl border p-1">
-				{#each [{ v: 'SEMUA', label: 'Semua', icon: LayoutGrid }, { v: 'JUAL', label: 'Dijual', icon: Banknote }, { v: 'BARTER', label: 'Barter', icon: ArrowLeftRight }] as t}
+				{#each [{ v: 'SEMUA' as const, label: 'Semua', icon: LayoutGrid }, { v: 'JUAL' as const, label: 'Dijual', icon: Banknote }, { v: 'BARTER' as const, label: 'Barter', icon: ArrowLeftRight }] as t}
 					<button
 						onclick={() => { type = t.v; page = 1; }}
 						class="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-bold {type === t.v ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'}"
@@ -112,7 +112,7 @@
 					{ label: 'Cukup', value: 'Cukup' },
 					{ label: 'Rusak ringan', value: 'Rusak ringan' }
 				]}
-				onSelect={(v) => { condition = v; page = 1; }}
+				onSelect={(v) => { condition = v as typeof condition; page = 1; }}
 				class="inline-flex h-9 items-center gap-1.5 rounded-xl border bg-background px-3 text-sm font-bold hover:bg-muted"
 			>
 				{#snippet trigger()}
@@ -135,7 +135,7 @@
 
 			<DropdownMenu
 				items={Object.entries(sortLabels).map(([value, label]) => ({ label, value }))}
-				onSelect={(v) => { sort = v; page = 1; }}
+				onSelect={(v) => { sort = v as typeof sort; page = 1; }}
 				class="inline-flex h-9 items-center gap-1.5 rounded-xl border bg-background px-3 text-sm font-bold hover:bg-muted"
 			>
 				{#snippet trigger()}
@@ -155,7 +155,7 @@
 
 	<!-- Grid -->
 	{#if visible.length}
-		<div class="mt-6 grid grid-cols-2 gap-4 lg:grid-cols-3">
+		<div class="mt-6 grid grid-cols-2 gap-5 lg:grid-cols-3">
 			{#each visible as book (book.id)}
 				<BookCard {book} {formatPrice} />
 			{/each}

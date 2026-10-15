@@ -4,10 +4,10 @@
 	import { type VariantProps, tv } from 'tailwind-variants';
 
 	export const buttonVariants = tv({
-		base: 'inline-flex shrink-0 items-center justify-center gap-2 rounded-md text-sm font-medium whitespace-nowrap transition-all outline-none focus-visible:ring-2 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 cursor-pointer',
+		base: 'inline-flex shrink-0 items-center justify-center gap-2 rounded-sm text-sm font-bold whitespace-nowrap transition-all outline-none focus-visible:ring-2 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 cursor-pointer',
 		variants: {
 			variant: {
-				default: 'bg-primary text-primary-foreground shadow-xs hover:bg-primary/90',
+				default: 'bg-primary text-primary-foreground uppercase tracking-wide hover:brightness-95',
 				secondary: 'bg-secondary text-secondary-foreground shadow-xs hover:bg-secondary/80',
 				outline: 'border bg-background shadow-xs hover:bg-accent hover:text-accent-foreground',
 				ghost: 'hover:bg-accent hover:text-accent-foreground',
@@ -51,7 +51,12 @@
 </script>
 
 {#if href}
-	<a {href} bind:this={ref} class={_cn(buttonVariants({ variant, size }), className)} {...restProps}>
+	<a
+		{href}
+		bind:this={ref}
+		class={_cn(buttonVariants({ variant, size }), className)}
+		{...(restProps as HTMLAnchorAttributes)}
+	>
 		{@render children?.()}
 	</a>
 {:else}
