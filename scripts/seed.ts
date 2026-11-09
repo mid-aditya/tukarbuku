@@ -8,13 +8,20 @@
  */
 
 import 'dotenv/config';
-import { uuid } from '../src/lib/server/uuid';
-import { getDb } from '../src/lib/server/db';
-import { users, books } from '../src/lib/server/db/schema';
+import { drizzle } from 'drizzle-orm/postgres-js';
+import postgres from 'postgres';
 import { eq } from 'drizzle-orm';
+import { uuid } from '../src/lib/server/uuid';
+import * as schema from '../src/lib/server/db/schema';
+import { users, books } from '../src/lib/server/db/schema';
 
 async function main() {
-	const db = getDb();
+	if (!process.env.DATABASE_URL) {
+		throw new Error('DATABASE_URL is not configured. Copy .env.example to .env before seeding.');
+	}
+
+	const client = postgres(process.env.DATABASE_URL, { prepare: false, max: 1 });
+	const db = drizzle(client, { schema });
 
 	// ── Sample users ────────────────────────────────────────────────────────
 	const sampleUsers = [
@@ -70,6 +77,7 @@ async function main() {
 		}
 	}
 
+	await client.end();
 	console.log('\nSeed complete.');
 }
 

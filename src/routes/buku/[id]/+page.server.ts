@@ -1,22 +1,26 @@
 import { error } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
-import { books } from '$lib/data/books';
+import { getBookById, listBooks } from '$lib/server/books';
 
 export const load: PageServerLoad = async ({ params }) => {
-	// TODO: replace with DB query when database has data.
-	// Example:
-	//   const db = getDb();
-	//   const row = await db.select().from(booksTable).where(eq(booksTable.id, params.id)).get();
-	//   if (!row) throw error(404, 'Buku tidak ditemukan');
-	//   return { book: row };
-
-	// Seed lookup uses numeric id; DB uses string uuid.
-	const id = Number(params.id);
-	const book = books.find((b) => b.id === id);
-
-	if (!book) {
-		throw error(404, 'Buku tidak ditemukan');
+	let book;
+	try {
+		book = await getBookById(params.id);
+	} catch (err) {
+		console.error('[buku] gagal memuat detail buku:', err);
+		throw error(503, 'Database sedang tidak tersedia. Coba lagi sebentar lagi.');
 	}
 
-	return { book };
+	if (!book) throw error(404, 'Buku tidak ditemukan');
+
+	// Rekomendasi: listing lain di kota yang sama.
+	let related: Awaited<ReturnType<typeof listBooks>>['items'] = [];
+	try {
+		const result = await listBooks({ city: book.city, pageSize: 4 });
+		related = result.items.filter((item) => item.id !== book.id).slice(0, 3);
+	} catch {
+		related = [];
+	}
+
+	return { book, related };
 };

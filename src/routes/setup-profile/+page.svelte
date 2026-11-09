@@ -8,6 +8,7 @@
 
 	let { data, form }: { data: PageData; form: ActionData } = $props();
 	let loading = $state(false);
+	// svelte-ignore state_referenced_locally
 	let name = $state(data.session.user.name ?? '');
 	let city = $state('');
 	let phone = $state('');

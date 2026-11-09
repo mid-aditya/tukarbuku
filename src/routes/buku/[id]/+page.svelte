@@ -4,11 +4,23 @@
 	import Avatar from '$lib/components/ui/avatar.svelte';
 	import Card from '$lib/components/ui/card.svelte';
 	import Button from '$lib/components/ui/button.svelte';
+	import BookCard from '$lib/components/book-card.svelte';
 	let { data }: { data: PageData } = $props();
 	let saved = $state(false);
+	const createdAt = $derived(
+		new Intl.DateTimeFormat('id-ID', { dateStyle: 'long' }).format(new Date(data.book.createdAt))
+	);
+	const statusLabels: Record<string, string> = {
+		tersedia: 'Tersedia',
+		proses: 'Sedang diproses',
+		selesai: 'Sudah terjual',
+		dibatalkan: 'Dibatalkan'
+	};
 	let price = $derived(data.book.listingType === 'JUAL'
 		? new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(data.book.price ?? 0)
 		: data.book.wantedInExchange);
+	const formatPrice = (value: number) =>
+		new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(value);
 </script>
 
 <svelte:head>
@@ -46,13 +58,13 @@
 			<dl class="grid grid-cols-2 border-b text-sm">
 				<div class="border-b py-3"><dt class="text-xs text-muted-foreground">Kondisi</dt><dd class="font-medium">{data.book.condition}</dd></div>
 				<div class="border-b py-3"><dt class="text-xs text-muted-foreground">Lokasi COD</dt><dd class="font-medium">{data.book.city}</dd></div>
-				<div class="py-3"><dt class="text-xs text-muted-foreground">Status</dt><dd class="font-medium">● Tersedia</dd></div>
-				<div class="py-3"><dt class="text-xs text-muted-foreground">Diposting</dt><dd class="font-medium">Baru-baru ini</dd></div>
+				<div class="py-3"><dt class="text-xs text-muted-foreground">Status</dt><dd class="font-medium">● {statusLabels[data.book.status] ?? 'Tersedia'}</dd></div>
+				<div class="py-3"><dt class="text-xs text-muted-foreground">Diposting</dt><dd class="font-medium">{createdAt}</dd></div>
 			</dl>
 
 			<Card class="mt-4 bg-muted/50 p-5">
-				<h2 class="font-semibold">Catatan kondisi</h2>
-				<p class="mt-1 text-sm text-muted-foreground">Buku masih layak dibaca dan siap berpindah tangan. Tanyakan detail noda, lipatan, atau coretan kepada pemilik melalui chat.</p>
+				<h2 class="font-semibold">Deskripsi dari pemilik</h2>
+				<p class="mt-1 whitespace-pre-line text-sm text-muted-foreground">{data.book.description}</p>
 			</Card>
 
 			<Card class="mt-4 flex items-center gap-3 p-4">
@@ -78,4 +90,18 @@
 			<li><p class="font-semibold">Tetap gunakan chat.</p><p class="text-muted-foreground">Simpan riwayat kesepakatan di Tukarbuku.</p></li>
 		</ul>
 	</Card>
+
+	{#if data.related.length}
+		<section class="mt-12" aria-label="Buku lain di kota yang sama">
+			<div class="mb-4 flex items-end justify-between">
+				<h2 class="text-xl font-bold tracking-tight md:text-2xl">Buku lain di {data.book.city}</h2>
+				<a href={`/koleksi?kota=${encodeURIComponent(data.book.city)}`} class="text-sm font-semibold text-primary hover:underline">Lihat semua</a>
+			</div>
+			<div class="grid grid-cols-2 gap-5 lg:grid-cols-3">
+				{#each data.related as book (book.id)}
+					<BookCard {book} {formatPrice} />
+				{/each}
+			</div>
+		</section>
+	{/if}
 </div>

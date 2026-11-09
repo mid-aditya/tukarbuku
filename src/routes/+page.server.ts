@@ -1,10 +1,15 @@
 import type { PageServerLoad } from './$types';
-import { books } from '$lib/data/books';
+import { listBooks, listCities } from '$lib/server/books';
 
-export const load: PageServerLoad = async ({ locals }) => {
-	// TODO: replace with DB query + pagination when database has data.
-	// Example:
-	//   const db = getDb();
-	//   const rows = await db.select().from(bookTable).where(eq(bookTable.status, 'tersedia')).limit(50);
-	return { books };
+export const load: PageServerLoad = async () => {
+	try {
+		const [{ items }, cities] = await Promise.all([
+			listBooks({ pageSize: 24, sort: 'terbaru' }),
+			listCities()
+		]);
+		return { books: items, cities, dbAvailable: true };
+	} catch (err) {
+		console.error('[home] gagal memuat buku dari database:', err);
+		return { books: [], cities: [], dbAvailable: false };
+	}
 };
