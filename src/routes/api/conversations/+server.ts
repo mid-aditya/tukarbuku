@@ -3,6 +3,7 @@ import type { RequestHandler } from './$types';
 import { getDb } from '$lib/server/db';
 import { conversations, users, books } from '$lib/server/db/schema';
 import { eq, desc, or, and } from 'drizzle-orm';
+import { alias } from 'drizzle-orm/pg-core';
 import { uuid } from '$lib/server/uuid';
 
 export const GET: RequestHandler = async ({ locals }) => {
@@ -12,7 +13,11 @@ export const GET: RequestHandler = async ({ locals }) => {
 	const db = getDb();
 	const userId = session.user.id;
 
-	// Find all conversations where user is participant one or two.
+	// Single query: conversation + book title + both participant names.
+	// Avoids the previous 1 + 2N query pattern.
+	const participantOne = alias(users, 'participant_one');
+	const participantTwo = alias(users, 'participant_two');
+
 	const rows = await db
 		.select({
 			id: conversations.id,
@@ -20,8 +25,14 @@ export const GET: RequestHandler = async ({ locals }) => {
 			participantOneId: conversations.participantOneId,
 			participantTwoId: conversations.participantTwoId,
 			createdAt: conversations.createdAt,
+			bookTitle: books.title,
+			participantOneName: participantOne.name,
+			participantTwoName: participantTwo.name,
 		})
 		.from(conversations)
+		.leftJoin(books, eq(books.id, conversations.bookId))
+		.leftJoin(participantOne, eq(participantOne.id, conversations.participantOneId))
+		.leftJoin(participantTwo, eq(participantTwo.id, conversations.participantTwoId))
 		.where(
 			or(
 				eq(conversations.participantOneId, userId),
@@ -30,25 +41,20 @@ export const GET: RequestHandler = async ({ locals }) => {
 		)
 		.orderBy(desc(conversations.createdAt));
 
-	// Enrich with book title and other participant name.
-	const enriched = await Promise.all(
-		rows.map(async (row) => {
-			const otherUserId =
-				row.participantOneId === userId ? row.participantTwoId : row.participantOneId;
-			const [bookRow, userRow] = await Promise.all([
-				row.bookId
-					? db.select({ title: books.title }).from(books).where(eq(books.id, row.bookId)).then(r => r[0])
-					: Promise.resolve(null),
-				db.select({ name: users.name }).from(users).where(eq(users.id, otherUserId)).then(r => r[0]),
-			]);
+	const enriched = rows.map((row) => {
+		const otherUserName =
+			row.participantOneId === userId ? row.participantTwoName : row.participantOneName;
 
-			return {
-				...row,
-				bookTitle: bookRow?.title ?? null,
-				otherUserName: userRow?.name ?? 'Tanpa nama',
-			};
-		}),
-	);
+		return {
+			id: row.id,
+			bookId: row.bookId,
+			participantOneId: row.participantOneId,
+			participantTwoId: row.participantTwoId,
+			createdAt: row.createdAt,
+			bookTitle: row.bookTitle ?? null,
+			otherUserName: otherUserName ?? 'Tanpa nama',
+		};
+	});
 
 	return json(enriched);
 };
