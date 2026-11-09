@@ -3,7 +3,7 @@
 	import Button from '$lib/components/ui/button.svelte';
 	import Badge from '$lib/components/ui/badge.svelte';
 	import Card from '$lib/components/ui/card.svelte';
-	import ProductCard from '$lib/components/product-card.svelte';
+	import BookCard from '$lib/components/book-card.svelte';
 	import {
 		ArrowRight,
 		ArrowLeft,
@@ -171,7 +171,7 @@
 			class="-mx-1 flex snap-x snap-mandatory gap-4 overflow-x-auto px-1 pb-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden md:gap-6"
 		>
 			{#each jual.slice(0, 8) as book (book.id)}
-				<ProductCard {book} {formatPrice} />
+				<BookCard {book} {formatPrice} variant="shelf" />
 			{/each}
 		</div>
 		<div class="mt-2 border-t border-border pt-6 text-center">
@@ -256,7 +256,7 @@
 		<p class="mb-4 text-sm text-muted-foreground">Temukan listing terbaru dari komunitas pembaca Indonesia.</p>
 		<div bind:this={newTrack} class="-mx-1 flex snap-x snap-mandatory gap-4 overflow-x-auto px-1 pb-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden md:gap-6">
 			{#each newest as book (book.id)}
-				<ProductCard {book} {formatPrice} />
+				<BookCard {book} {formatPrice} variant="shelf" />
 			{/each}
 		</div>
 		<div class="mt-4">
