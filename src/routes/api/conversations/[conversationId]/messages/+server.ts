@@ -3,14 +3,18 @@ import type { RequestHandler } from './$types';
 import { getDb } from '$lib/server/db';
 import { conversations, messages, users } from '$lib/server/db/schema';
 import { eq, and, or, asc } from 'drizzle-orm';
+import { conversationIdSchema } from '$lib/validation/conversation';
 
 export const GET: RequestHandler = async ({ locals, params }) => {
 	const session = await locals.auth();
 	if (!session?.user?.id) throw error(401, 'Unauthorized');
 
+	const parsedId = conversationIdSchema.safeParse(params.conversationId);
+	if (!parsedId.success) throw error(400, 'conversationId tidak valid');
+
 	const db = getDb();
 	const userId = session.user.id;
-	const conversationId = params.conversationId;
+	const conversationId = parsedId.data;
 
 	// Verify user is a participant in this conversation.
 	const conv = await db

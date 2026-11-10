@@ -4,20 +4,18 @@ import { getDb } from '$lib/server/db';
 import { conversations, messages } from '$lib/server/db/schema';
 import { eq, and, or } from 'drizzle-orm';
 import { uuid } from '$lib/server/uuid';
+import { messageInputSchema } from '$lib/validation/message';
 
 export const POST: RequestHandler = async ({ locals, request }) => {
 	const session = await locals.auth();
 	if (!session?.user?.id) throw error(401, 'Unauthorized');
 
-	const body = await request.json();
-	const { conversationId, content } = body as { conversationId: string; content: string };
-
-	if (!conversationId || !content?.trim()) {
-		throw error(400, 'conversationId and content are required');
+	const raw = (await request.json().catch(() => null)) as unknown;
+	const parsed = messageInputSchema.safeParse(raw);
+	if (!parsed.success) {
+		throw error(400, parsed.error.issues[0]?.message ?? 'Input tidak valid');
 	}
-	if (content.trim().length > 2000) {
-		throw error(400, 'Message too long (max 2000 characters)');
-	}
+	const { conversationId, content } = parsed.data;
 
 	const db = getDb();
 	const userId = session.user.id;

@@ -5,6 +5,7 @@ import { conversations, users, books } from '$lib/server/db/schema';
 import { eq, desc, or, and } from 'drizzle-orm';
 import { alias } from 'drizzle-orm/pg-core';
 import { uuid } from '$lib/server/uuid';
+import { conversationInputSchema, conversationIdSchema } from '$lib/validation/conversation';
 
 export const GET: RequestHandler = async ({ locals }) => {
 	const session = await locals.auth();
@@ -63,13 +64,30 @@ export const POST: RequestHandler = async ({ locals, request }) => {
 	const session = await locals.auth();
 	if (!session?.user?.id) throw error(401, 'Unauthorized');
 
-	const body = await request.json();
-	const { bookId, recipientId } = body as { bookId?: string; recipientId?: string };
+	const raw = (await request.json().catch(() => null)) as unknown;
+	const parsed = conversationInputSchema.safeParse(raw);
+	if (!parsed.success) {
+		throw error(400, parsed.error.issues[0]?.message ?? 'Input tidak valid');
+	}
+	const { recipientId, bookId: bookIdRaw } = parsed.data;
+	const bookId = bookIdRaw ?? null;
+	const userId = session.user.id;
 
-	if (!recipientId) throw error(400, 'recipientId is required');
+	if (recipientId === userId) throw error(400, 'Tidak bisa memulai percakapan dengan diri sendiri');
 
 	const db = getDb();
-	const userId = session.user.id;
+
+	const [recipient] = await db
+		.select({ id: users.id })
+		.from(users)
+		.where(eq(users.id, recipientId))
+		.limit(1);
+	if (!recipient) throw error(400, 'Penerima tidak ditemukan');
+
+	if (bookId) {
+		const [bookRow] = await db.select({ id: books.id }).from(books).where(eq(books.id, bookId)).limit(1);
+		if (!bookRow) throw error(400, 'Buku yang dituju tidak ditemukan');
+	}
 
 	// Check for existing conversation with this recipient.
 	const existing = await db
