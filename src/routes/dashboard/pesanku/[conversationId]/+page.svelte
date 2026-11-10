@@ -91,7 +91,16 @@
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({ conversationId, content })
 			});
-			if (!res.ok) throw new Error('Gagal mengirim pesan.');
+			if (!res.ok) {
+				let detail = 'Gagal mengirim pesan.';
+				try {
+					const data = (await res.json()) as { message?: string };
+					if (data?.message) detail = data.message;
+				} catch {
+					// keep the generic message
+				}
+				throw new Error(detail);
+			}
 			const saved = await res.json();
 			messages = messages.map((m) => (m.tempId === tempId ? { ...saved, tempId: undefined } : m));
 		} catch (e) {

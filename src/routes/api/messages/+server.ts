@@ -4,11 +4,21 @@ import { getDb } from '$lib/server/db';
 import { conversations, messages } from '$lib/server/db/schema';
 import { eq, and, or } from 'drizzle-orm';
 import { uuid } from '$lib/server/uuid';
+import { rateLimit } from '$lib/server/rate-limit';
 import { messageInputSchema } from '$lib/validation/message';
 
 export const POST: RequestHandler = async ({ locals, request }) => {
 	const session = await locals.auth();
 	if (!session?.user?.id) throw error(401, 'Unauthorized');
+
+	const userId = session.user.id;
+	const limit = rateLimit(`messages:${userId}`, 30, 60_000);
+	if (!limit.ok) {
+		return json(
+			{ message: 'Terlalu banyak pesan. Coba lagi sebentar lagi.' },
+			{ status: 429, headers: { 'Retry-After': String(limit.resetInSec) } }
+		);
+	}
 
 	const raw = (await request.json().catch(() => null)) as unknown;
 	const parsed = messageInputSchema.safeParse(raw);
@@ -18,7 +28,6 @@ export const POST: RequestHandler = async ({ locals, request }) => {
 	const { conversationId, content } = parsed.data;
 
 	const db = getDb();
-	const userId = session.user.id;
 
 	// Verify user is a participant.
 	const conv = await db

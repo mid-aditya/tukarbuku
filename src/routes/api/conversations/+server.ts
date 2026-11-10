@@ -6,6 +6,7 @@ import { eq, desc, or, and } from 'drizzle-orm';
 import { alias } from 'drizzle-orm/pg-core';
 import { uuid } from '$lib/server/uuid';
 import { conversationInputSchema, conversationIdSchema } from '$lib/validation/conversation';
+import { rateLimit } from '$lib/server/rate-limit';
 
 export const GET: RequestHandler = async ({ locals }) => {
 	const session = await locals.auth();
@@ -74,6 +75,14 @@ export const POST: RequestHandler = async ({ locals, request }) => {
 	const userId = session.user.id;
 
 	if (recipientId === userId) throw error(400, 'Tidak bisa memulai percakapan dengan diri sendiri');
+
+	const limit = rateLimit(`conversation-post:${userId}`, 5, 60_000);
+	if (!limit.ok) {
+		return json(
+			{ message: 'Terlalu banyak percakapan baru. Coba lagi sebentar lagi.' },
+			{ status: 429, headers: { 'Retry-After': String(limit.resetInSec) } }
+		);
+	}
 
 	const db = getDb();
 

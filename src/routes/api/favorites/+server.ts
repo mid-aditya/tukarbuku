@@ -2,6 +2,7 @@ import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { getBookById } from '$lib/server/books';
 import { listFavoriteIds, toggleFavorite } from '$lib/server/favorites';
+import { rateLimit } from '$lib/server/rate-limit';
 import { favoriteToggleInputSchema } from '$lib/validation/favorite';
 
 export const GET: RequestHandler = async ({ locals }) => {
@@ -21,6 +22,14 @@ export const POST: RequestHandler = async ({ locals, request }) => {
 		throw error(400, parsed.error.issues[0]?.message ?? 'Input tidak valid');
 	}
 	const { bookId } = parsed.data;
+
+	const limit = rateLimit(`favorites:${session.user.id}`, 30, 60_000);
+	if (!limit.ok) {
+		return json(
+			{ message: 'Terlalu banyak perubahan favorit. Coba lagi sebentar lagi.' },
+			{ status: 429, headers: { 'Retry-After': String(limit.resetInSec) } }
+		);
+	}
 
 	const book = await getBookById(bookId);
 	if (!book) throw error(404, 'Buku tidak ditemukan');
