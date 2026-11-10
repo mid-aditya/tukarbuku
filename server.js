@@ -1,101 +1,183 @@
 /**
- * Custom production server — wraps the SvelteKit Node handler with Socket.IO.
+ * Custom production server — wraps the SvelteKit Node handler (adapter-node)
+ * with a Socket.IO layer for realtime chat.
+ *
+ * Design decisions (documented trade-off, single-instance deployment):
+ * - Socket.IO is a READ/notify path only. Messages are always persisted
+ *   through the REST endpoint `POST /api/messages` (validated + rate-limited),
+ *   which then broadcasts `message:new` via the `io` instance exposed on
+ *   `globalThis.__socketio` below.
+ * - Auth happens at socket handshake: the Auth.js JWT session cookie is
+ *   decoded with `decode({ secret, salt })` where `salt` is the session
+ *   cookie name (that is how Auth.js derives the key).
+ * - `join:conversation` only joins the room after checking the user is a
+ *   participant in the DB — you cannot subscribe to someone else's chat.
+ * - `message:read` marks unread rows in the DB and notifies the room.
+ * - The rate limiter used by the REST write path is in-memory, so this
+ *   server assumes a single instance (add Redis adapter before scaling out).
  *
  * Usage (production):
- *   node server.js
+ *   npm run build && node server.js
  *
- * Development uses `npm run dev` (Vite dev server) which does NOT support Socket.IO
- * in this setup. For development with real-time chat, use `npm run dev:socket` separately.
+ * `npm run dev` (Vite) has no Socket.IO layer; the chat client falls back to
+ * REST polling in that case.
  */
 
 import { createServer } from 'http';
-import { parse } from 'url';
-import next from 'next';
 import { Server as SocketIO } from 'socket.io';
+import { decode } from '@auth/core/jwt';
+import postgres from 'postgres';
 
-const dev = process.env.NODE_ENV !== 'production';
 const hostname = process.env.HOSTNAME ?? 'localhost';
 const port = parseInt(process.env.PORT ?? '3000', 10);
+const origin = process.env.ORIGIN ?? `http://localhost:${port}`;
 
-// Lazy-load SvelteKit handler so it is only instantiated after env is ready.
-let handler;
-const app = next({ dev, hostname, quiet: false });
-const prepare = app.prepare();
+const sql = process.env.DATABASE_URL
+	? postgres(process.env.DATABASE_URL, { prepare: false, max: 5 })
+	: null;
+if (!sql) console.warn('[server] DATABASE_URL tidak diset — socket chat tidak akan berfungsi.');
 
-async function getHandler() {
-	if (!handler) {
-		await prepare;
-		// Dynamic import so env vars are read at runtime.
-		const mod = await import('./build/handler.js');
-		handler = mod.handler;
-	}
-	return handler;
+let handlerPromise;
+function getHandler() {
+	handlerPromise ??= import('./build/handler.js').then((mod) => mod.handler);
+	return handlerPromise;
 }
 
 const httpServer = createServer(async (req, res) => {
 	try {
-		const parsedUrl = parse(req.url, true);
-		const h = await getHandler();
-		await h(req, res, parsedUrl);
+		const handler = await getHandler();
+		handler(req, res);
 	} catch (err) {
 		console.error('Server error:', err);
-		res.statusCode = 500;
+		if (!res.headersSent) res.statusCode = 500;
 		res.end('Internal server error');
 	}
 });
 
 const io = new SocketIO(httpServer, {
 	cors: {
-		origin: process.env.ORIGIN ?? `http://localhost:${port}`,
+		origin: origin,
 		methods: ['GET', 'POST'],
 		credentials: true,
 	},
 });
 
-// ── In-memory presence map (pid → Set of socket ids) ──────────────────────
-// In production this should be replaced with Redis or a DB-backed store.
-const presence = new Map(); // userId → Set<socketId>
+// SvelteKit handlers (running through Vite/adapter) broadcast to rooms via this.
+globalThis.__socketio = io;
 
-io.on('connection', (socket) => {
-	const userId = socket.handshake.auth?.userId;
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const SESSION_COOKIE_INSECURE = 'authjs.session-token';
+const SESSION_COOKIE_SECURE = `__Secure-${SESSION_COOKIE_INSECURE}`;
+
+function parseCookies(header) {
+	const cookies = {};
+	if (!header) return cookies;
+	for (const part of header.split(';')) {
+		const idx = part.indexOf('=');
+		if (idx === -1) continue;
+		cookies[part.slice(0, idx).trim()] = decodeURIComponent(part.slice(idx + 1).trim());
+	}
+	return cookies;
+}
+
+/** Decode the Auth.js JWT session cookie from the socket handshake. */
+async function getHandshakeUserId(socket) {
+	const cookies = parseCookies(socket.handshake.headers.cookie);
+	const name = SESSION_COOKIE_SECURE in cookies ? SESSION_COOKIE_SECURE : SESSION_COOKIE_INSECURE;
+	const token = cookies[name];
+	const secret = process.env.AUTH_SECRET;
+	if (!token || !secret) return null;
+	try {
+		const session = await decode({ secret, salt: name, token });
+		return typeof session?.userId === 'string' ? session.userId : null;
+	} catch {
+		return null;
+	}
+}
+
+// Reject unauthenticated connections during the handshake itself: the client
+// receives a proper connect_error instead of a connect followed by a kick,
+// and socket.data.userId is guaranteed populated before any event can arrive.
+io.use(async (socket, next) => {
+	const userId = await getHandshakeUserId(socket);
 	if (!userId) {
-		socket.disconnect();
+		next(new Error('Sesi tidak valid. Muat ulang halaman untuk login ulang.'));
 		return;
 	}
+	socket.data.userId = userId;
+	next();
+});
 
-	// Track presence.
-	if (!presence.has(userId)) presence.set(userId, new Set());
-	presence.get(userId).add(socket.id);
+/** Verify the user actually participates in the conversation before joining. */
+function isParticipant(conversationId, userId) {
+	if (typeof userId !== 'string' || !UUID_RE.test(conversationId)) return Promise.resolve(false);
+	return sql`
+		select 1 from conversations
+		where id = ${conversationId}
+		  and (participant_one_id = ${userId} or participant_two_id = ${userId})
+		limit 1
+	`.then((rows) => rows.length > 0);
+}
 
-	console.log(`[socket] user ${userId} connected (socket ${socket.id})`);
+io.on('connection', (socket) => {
+	const userId = socket.data.userId;
+	// Room per user: lets the server notify someone about new/unread
+	// conversations without knowing which chat they have open.
+	socket.join(`user:${userId}`);
+	console.log(`[socket] user ${userId.slice(0, 8)}… connected (${socket.id})`);
 
-	// Join per-conversation room so we can broadcast to all participants.
-	socket.on('join:conversation', (conversationId) => {
+	socket.on('join:conversation', async (conversationId, ack) => {
+		if (!userId) return ack?.({ ok: false, reason: 'unauthorized' });
+		if (!sql) return ack?.({ ok: false, reason: 'unavailable' });
+		if (typeof conversationId !== 'string' || !UUID_RE.test(conversationId)) {
+			return ack?.({ ok: false, reason: 'invalid' });
+		}
+		if (!(await isParticipant(conversationId, userId))) {
+			return ack?.({ ok: false, reason: 'forbidden' });
+		}
 		socket.join(`conversation:${conversationId}`);
-		console.log(`[socket] socket ${socket.id} joined room conversation:${conversationId}`);
+		ack?.({ ok: true });
 	});
 
 	socket.on('leave:conversation', (conversationId) => {
-		socket.leave(`conversation:${conversationId}`);
+		if (typeof conversationId === 'string' && UUID_RE.test(conversationId)) {
+			socket.leave(`conversation:${conversationId}`);
+		}
 	});
 
-	socket.on('message:send', (payload) => {
-		// payload: { conversationId, content, tempId }
-		// Broadcast to everyone in the room INCLUDING sender (for confirmation + timestamp).
-		io.to(`conversation:${payload.conversationId}`).emit('message:new', {
-			...payload,
-			senderId: userId,
-			sentAt: new Date().toISOString(),
-		});
+	// Mark all of the OTHER participant's unread messages as read, then let the
+	// sender's client update its read state. Payload shape:
+	// { conversationId, readerId, messageIds, readAt }
+	socket.on('message:read', async (conversationId, ack) => {
+		if (!userId) return ack?.({ ok: false, reason: 'unauthorized' });
+		if (!sql) return ack?.({ ok: false, reason: 'unavailable' });
+		if (typeof conversationId !== 'string' || !UUID_RE.test(conversationId)) {
+			return ack?.({ ok: false, reason: 'invalid' });
+		}
+		if (!(await isParticipant(conversationId, userId))) {
+			return ack?.({ ok: false, reason: 'forbidden' });
+		}
+		const readAt = new Date().toISOString();
+		const updated = await sql`
+			update messages set read_at = ${readAt}
+			where conversation_id = ${conversationId}
+			  and sender_id <> ${userId}
+			  and read_at is null
+			returning id
+		`;
+		if (updated.length) {
+			io.to(`conversation:${conversationId}`).emit('message:read', {
+				conversationId,
+				readerId: userId,
+				messageIds: updated.map((row) => row.id),
+				readAt,
+			});
+		}
+		ack?.({ ok: true, count: updated.length });
 	});
 
 	socket.on('disconnect', () => {
-		const set = presence.get(userId);
-		if (set) {
-			set.delete(socket.id);
-			if (!set.size) presence.delete(userId);
-		}
-		console.log(`[socket] user ${userId} disconnected (socket ${socket.id})`);
+		if (userId) console.log(`[socket] user ${userId.slice(0, 8)}… disconnected (${socket.id})`);
 	});
 });
 
@@ -106,4 +188,11 @@ httpServer
 	})
 	.listen(port, () => {
 		console.log(`> Tukarbuku ready on http://${hostname}:${port}`);
+		for (const signal of ['SIGINT', 'SIGTERM']) {
+			process.on(signal, () => {
+				io.close();
+				httpServer.close();
+				sql?.end({ timeout: 5 });
+			});
+		}
 	});

@@ -52,5 +52,17 @@ export const POST: RequestHandler = async ({ locals, request }) => {
 		content: content.trim(),
 	});
 
-	return json({ id, conversationId, senderId: userId, content: content.trim(), sentAt: new Date().toISOString() });
+	// Realtime notify path: the custom production server exposes its Socket.IO
+	// instance on globalThis.__socketio (see server.js). Broadcast to the room
+	// AFTER persisting so every client, including the sender's other tabs,
+	// receives the authoritative row. No-op under `npm run dev` where there is
+	// no socket layer (clients fall back to REST polling).
+	type SocketServer = { to: (room: string) => { emit: (event: string, payload: unknown) => void } };
+	const socketServer = (globalThis as { __socketio?: SocketServer }).__socketio;
+	const sentAt = new Date().toISOString();
+	socketServer
+		?.to(`conversation:${conversationId}`)
+		.emit('message:new', { id, conversationId, senderId: userId, content: content.trim(), sentAt, senderName: session.user.name ?? null });
+
+	return json({ id, conversationId, senderId: userId, content: content.trim(), sentAt });
 };
