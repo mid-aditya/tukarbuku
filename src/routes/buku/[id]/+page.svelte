@@ -34,10 +34,10 @@
 	<div class="mt-6 grid gap-10 md:grid-cols-2">
 		<section>
 			<div class="grid h-[480px] place-items-center rounded-xl border bg-muted/50">
-				<img src={data.book.cover} alt={`Sampul ${data.book.title}`} width="360" height="500" class="h-96 w-64 object-cover shadow-lg" />
+				<img src={data.book.cover} alt={`Sampul ${data.book.title}`} width="360" height="500" decoding="async" fetchpriority="high" class="h-96 w-64 object-cover shadow-lg" />
 			</div>
 			<div class="mt-3 flex items-center gap-3 text-xs text-muted-foreground">
-				<img src={data.book.cover} alt="Tampilan sampul depan" class="h-16 w-12 rounded border object-cover" />
+				<img src={data.book.cover} alt="Tampilan sampul depan" loading="lazy" decoding="async" class="h-16 w-12 rounded border object-cover" />
 				<div><p class="font-semibold text-foreground">1 foto</p><p>Diunggah pemilik</p></div>
 			</div>
 		</section>

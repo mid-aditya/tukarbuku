@@ -85,7 +85,14 @@
 	<section class="relative mx-auto max-w-7xl px-4 pt-4" aria-label="Promo utama">
 		<div class="relative min-h-[22rem] overflow-hidden md:min-h-[28rem]">
 			{#if activeHero.image}
-				<img src={activeHero.image} alt="" aria-hidden="true" class="absolute inset-0 h-full w-full object-cover" />
+				<img
+				src={activeHero.image}
+				alt=""
+				aria-hidden="true"
+				decoding="async"
+				fetchpriority="high"
+				class="absolute inset-0 h-full w-full object-cover"
+			/>
 			{:else}
 				<div class="absolute inset-0 bg-foreground"></div>
 			{/if}
@@ -218,6 +225,7 @@
 								src={book.cover}
 								alt={`Sampul ${book.title}`}
 								loading="lazy"
+								decoding="async"
 								class="mx-auto h-36 w-auto object-contain md:h-44"
 							/>
 							<Badge variant="deal" class="absolute left-2 top-2 rounded-sm text-[10px] font-bold uppercase">

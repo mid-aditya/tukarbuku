@@ -77,6 +77,7 @@
 			src={book.cover}
 			alt={`Sampul ${book.title}`}
 			loading="lazy"
+			decoding="async"
 			width={isGrid ? 160 : 280}
 			height={isGrid ? 220 : 350}
 			class={cn(

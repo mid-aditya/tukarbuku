@@ -83,6 +83,7 @@
 								alt={`Sampul ${book.title}`}
 								class="h-14 w-10 rounded-sm border object-cover"
 								loading="lazy"
+								decoding="async"
 							/>
 							<div class="min-w-0 flex-1">
 								<a href={`/buku/${book.id}`} class="line-clamp-1 text-sm font-semibold hover:underline">
