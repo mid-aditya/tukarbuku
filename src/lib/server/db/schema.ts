@@ -1,5 +1,5 @@
 import { relations } from 'drizzle-orm';
-import { boolean, index, integer, pgEnum, pgTable, text, timestamp, uniqueIndex, varchar } from 'drizzle-orm/pg-core';
+import { boolean, index, integer, pgEnum, pgTable, primaryKey, text, timestamp, uniqueIndex, varchar } from 'drizzle-orm/pg-core';
 
 export const conditionEnum = pgEnum('book_condition', ['baru', 'baik', 'cukup', 'rusak-ringan']);
 export const listingTypeEnum = pgEnum('listing_type', ['JUAL', 'BARTER', 'DONASI']);
@@ -30,14 +30,25 @@ export const messages = pgTable('messages', {
   id: id(), conversationId: varchar('conversation_id', { length: 36 }).notNull().references(() => conversations.id, { onDelete: 'cascade' }), senderId: varchar('sender_id', { length: 36 }).notNull().references(() => users.id, { onDelete: 'cascade' }), content: varchar('content', { length: 2000 }).notNull(), sentAt: timestamp('sent_at', { withTimezone: true }).defaultNow().notNull(), readAt: timestamp('read_at', { withTimezone: true }),
 }, (table) => [index('messages_conversation_id_idx').on(table.conversationId), index('messages_sent_at_idx').on(table.sentAt)]);
 
-export const usersRelations = relations(users, ({ many }) => ({ books: many(books), buyerTransactions: many(transactions, { relationName: 'buyer' }), sellerTransactions: many(transactions, { relationName: 'seller' }), participantOneConversations: many(conversations, { relationName: 'participantOne' }), participantTwoConversations: many(conversations, { relationName: 'participantTwo' }), sentMessages: many(messages) }));
-export const booksRelations = relations(books, ({ one, many }) => ({ owner: one(users, { fields: [books.ownerId], references: [users.id] }), transactions: many(transactions), conversations: many(conversations) }));
+export const favorites = pgTable('favorites', {
+  userId: varchar('user_id', { length: 36 }).notNull().references(() => users.id, { onDelete: 'cascade' }),
+  bookId: varchar('book_id', { length: 36 }).notNull().references(() => books.id, { onDelete: 'cascade' }),
+  createdAt: createdAt(),
+}, (table) => [
+  primaryKey({ columns: [table.userId, table.bookId] }),
+  index('favorites_book_id_idx').on(table.bookId),
+]);
+
+export const usersRelations = relations(users, ({ many }) => ({ books: many(books), buyerTransactions: many(transactions, { relationName: 'buyer' }), sellerTransactions: many(transactions, { relationName: 'seller' }), participantOneConversations: many(conversations, { relationName: 'participantOne' }), participantTwoConversations: many(conversations, { relationName: 'participantTwo' }), sentMessages: many(messages), favorites: many(favorites) }));
+export const booksRelations = relations(books, ({ one, many }) => ({ owner: one(users, { fields: [books.ownerId], references: [users.id] }), transactions: many(transactions), conversations: many(conversations), favorites: many(favorites) }));
 export const transactionsRelations = relations(transactions, ({ one }) => ({ book: one(books, { fields: [transactions.bookId], references: [books.id] }), buyer: one(users, { relationName: 'buyer', fields: [transactions.buyerId], references: [users.id] }), seller: one(users, { relationName: 'seller', fields: [transactions.sellerId], references: [users.id] }) }));
 export const conversationsRelations = relations(conversations, ({ one, many }) => ({ book: one(books, { fields: [conversations.bookId], references: [books.id] }), participantOne: one(users, { relationName: 'participantOne', fields: [conversations.participantOneId], references: [users.id] }), participantTwo: one(users, { relationName: 'participantTwo', fields: [conversations.participantTwoId], references: [users.id] }), messages: many(messages) }));
 export const messagesRelations = relations(messages, ({ one }) => ({ conversation: one(conversations, { fields: [messages.conversationId], references: [conversations.id] }), sender: one(users, { fields: [messages.senderId], references: [users.id] }) }));
+export const favoritesRelations = relations(favorites, ({ one }) => ({ user: one(users, { fields: [favorites.userId], references: [users.id] }), book: one(books, { fields: [favorites.bookId], references: [books.id] }) }));
 
 export type User = typeof users.$inferSelect;
 export type Book = typeof books.$inferSelect;
 export type Transaction = typeof transactions.$inferSelect;
 export type Conversation = typeof conversations.$inferSelect;
 export type Message = typeof messages.$inferSelect;
+export type Favorite = typeof favorites.$inferSelect;

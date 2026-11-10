@@ -1,6 +1,10 @@
 <script lang="ts">
 	import '../app.css';
+	import { browser } from '$app/environment';
 	import { goto } from '$app/navigation';
+	import { favorites } from '$lib/stores/favorites.svelte';
+	import type { LayoutData } from './$types';
+	import type { Snippet } from 'svelte';
 	import Button from '$lib/components/ui/button.svelte';
 	import Input from '$lib/components/ui/input.svelte';
 	import SiteNavDrawer from '$lib/components/layout/site-nav-drawer.svelte';
@@ -16,10 +20,16 @@
 		Check
 	} from '@lucide/svelte';
 
-	let { children } = $props();
+	let { children, data }: { children: Snippet; data: LayoutData } = $props();
 
 	let search = $state('');
 	let menuOpen = $state(false);
+
+	$effect(() => {
+		if (!browser) return;
+		if (data.session?.user) favorites.load();
+		else favorites.reset();
+	});
 
 	function submitSearch() {
 		const q = search.trim();
@@ -83,7 +93,7 @@
 			<a href="/login" class="inline-flex size-9 items-center justify-center text-foreground hover:bg-muted sm:size-10" aria-label="Akun">
 				<User class="size-5" />
 			</a>
-			<a href="/koleksi" class="hidden size-10 items-center justify-center text-foreground hover:bg-muted md:inline-flex" aria-label="Favorit">
+			<a href="/favorit" class="hidden size-10 items-center justify-center text-foreground hover:bg-muted md:inline-flex" aria-label="Favorit">
 				<Heart class="size-5" />
 			</a>
 			<a href="/dashboard/pesanku" class="inline-flex size-9 items-center justify-center text-foreground hover:bg-muted sm:size-10" aria-label="Pesan">

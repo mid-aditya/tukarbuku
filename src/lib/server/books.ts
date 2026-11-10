@@ -9,7 +9,7 @@ import {
 	type SortOption
 } from '$lib/data/books';
 
-const bookColumns = {
+export const bookColumns = {
 	id: books.id,
 	title: books.title,
 	author: books.author,
@@ -27,7 +27,7 @@ const bookColumns = {
 	ownerName: users.name
 };
 
-type BookRow = {
+export type BookRow = {
 	id: string;
 	title: string;
 	author: string;

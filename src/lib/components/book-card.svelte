@@ -1,6 +1,9 @@
 <script lang="ts">
 	import Badge from '$lib/components/ui/badge.svelte';
 	import { cn } from '$lib/components/ui/utils';
+	import { goto } from '$app/navigation';
+	import { page } from '$app/state';
+	import { favorites } from '$lib/stores/favorites.svelte';
 	import { Heart, Star, MapPin } from '@lucide/svelte';
 	import type { Book } from '$lib/data/books';
 
@@ -20,6 +23,22 @@
 	} = $props();
 
 	const isGrid = $derived(variant === 'grid');
+	const saved = $derived(favorites.has(book.id));
+	let pending = $state(false);
+
+	async function toggleSaved(event: MouseEvent) {
+		event.preventDefault();
+		event.stopPropagation();
+		if (pending) return;
+
+		pending = true;
+		const result = await favorites.toggle(book.id);
+		pending = false;
+
+		if (result === 'auth') {
+			goto(`/login?redirectTo=${encodeURIComponent(page.url.pathname + page.url.search)}`);
+		}
+	}
 
 	const lowestLabel = $derived(
 		isGrid || compact || book.listingType !== 'JUAL' || !book.price
@@ -41,15 +60,17 @@
 		<button
 			type="button"
 			class={cn(
-				'absolute z-10 grid place-items-center transition-colors',
+				'absolute z-10 grid place-items-center transition-colors disabled:opacity-60',
 				isGrid
 					? 'right-3 top-3 size-8 rounded-full bg-card/90 text-muted-foreground opacity-0 shadow-sm group-hover:opacity-100'
 					: 'right-2 top-2 size-9 text-foreground/70 hover:text-foreground'
 			)}
-			aria-label="Simpan ke favorit"
-			onclick={(e) => e.preventDefault()}
+			aria-label={saved ? 'Hapus dari favorit' : 'Simpan ke favorit'}
+			aria-pressed={saved}
+			disabled={pending}
+			onclick={toggleSaved}
 		>
-			<Heart class={isGrid ? 'size-4' : 'size-[1.35rem] stroke-[1.25]'} />
+			<Heart class={cn(isGrid ? 'size-4' : 'size-[1.35rem] stroke-[1.25]', saved && 'fill-primary text-primary')} />
 		</button>
 
 		<img

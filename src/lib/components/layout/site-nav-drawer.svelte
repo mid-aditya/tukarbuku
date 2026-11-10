@@ -145,6 +145,9 @@
 					<button type="button" class="flex items-center gap-2 py-2 font-medium" onclick={() => nav('/dashboard/buku-baru')}>
 						<Package class="size-4" /> Pasang buku
 					</button>
+					<button type="button" class="flex items-center gap-2 py-2 font-medium" onclick={() => nav('/favorit')}>
+						<Heart class="size-4" /> Favorit
+					</button>
 				</div>
 			</div>
 		</nav>
