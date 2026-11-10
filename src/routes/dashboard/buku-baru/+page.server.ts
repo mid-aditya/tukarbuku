@@ -1,28 +1,24 @@
 import { redirect, fail } from '@sveltejs/kit';
-import { z } from 'zod';
 import type { Actions, PageServerLoad } from './$types';
 import { uuid } from '$lib/server/uuid';
 import { getDb } from '$lib/server/db';
-import { books } from '$lib/server/db/schema';
+import { books, users } from '$lib/server/db/schema';
 import { eq } from 'drizzle-orm';
+import { bookInputSchema, type ListingFormErrors } from '$lib/validation/book';
 
 export const load: PageServerLoad = async ({ locals }) => {
 	const session = await locals.auth();
 	if (!session?.user) throw redirect(303, '/login?redirectTo=/dashboard/buku-baru');
-	return {};
-};
 
-const createBookSchema = z.object({
-	title: z.string().trim().min(1).max(200),
-	author: z.string().trim().min(1).max(160),
-	condition: z.enum(['baru', 'baik', 'cukup', 'rusak-ringan']),
-	description: z.string().trim().min(1).max(5000),
-	listingType: z.enum(['JUAL', 'BARTER']),
-	price: z.string().trim().optional(),
-	wantedInExchange: z.string().trim().max(1000).optional(),
-	city: z.string().trim().min(1).max(100),
-	coverImageUrl: z.string().trim().url().max(2048),
-});
+	const db = getDb();
+	const [user] = await db
+		.select({ city: users.city })
+		.from(users)
+		.where(eq(users.id, session.user.id))
+		.limit(1);
+
+	return { userCity: user?.city ?? null };
+};
 
 export const actions: Actions = {
 	default: async ({ request, locals }) => {
@@ -30,31 +26,27 @@ export const actions: Actions = {
 		if (!session?.user?.id) throw redirect(303, '/login?redirectTo=/dashboard/buku-baru');
 
 		const data = await request.formData();
-		const raw = {
+		const priceRaw = String(data.get('price') ?? '').replace(/\D/g, '');
+
+		const parsed = bookInputSchema.safeParse({
 			title: data.get('title'),
 			author: data.get('author'),
 			condition: data.get('condition'),
 			description: data.get('description'),
 			listingType: data.get('listingType'),
-			price: data.get('price') || undefined,
-			wantedInExchange: data.get('wantedInExchange') || undefined,
+			price: priceRaw ? Number(priceRaw) : null,
+			wantedInExchange: data.get('wantedInExchange'),
 			city: data.get('city'),
-			coverImageUrl: data.get('coverImageUrl'),
-		};
+			coverImageUrl: data.get('coverImageUrl')
+		});
 
-		const parsed = createBookSchema.safeParse(raw);
 		if (!parsed.success) {
-			return fail(422, { error: 'Data buku tidak valid. Pastikan semua field wajib terisi.' });
-		}
-
-		const { price, wantedInExchange, ...rest } = parsed.data;
-		const priceNum = parsed.data.listingType === 'JUAL' && price ? parseInt(price, 10) : null;
-
-		if (parsed.data.listingType === 'JUAL' && (!price || isNaN(priceNum!))) {
-			return fail(422, { error: 'Harga wajib diisi untuk buku yang dijual.' });
-		}
-		if (parsed.data.listingType === 'BARTER' && !wantedInExchange) {
-			return fail(422, { error: 'Deskripsi buku yang diinginkan wajib diisi untuk barter.' });
+			const flat = parsed.error.flatten();
+			const errors = flat.fieldErrors as ListingFormErrors;
+			return fail(422, {
+				error: flat.formErrors[0] ?? 'Data buku belum lengkap. Periksa field yang ditandai.',
+				errors
+			});
 		}
 
 		const db = getDb();
@@ -68,14 +60,14 @@ export const actions: Actions = {
 			condition: parsed.data.condition,
 			description: parsed.data.description,
 			listingType: parsed.data.listingType,
-			price: priceNum,
-			wantedInExchange: wantedInExchange ?? null,
+			price: parsed.data.price ?? null,
+			wantedInExchange: parsed.data.wantedInExchange || null,
 			city: parsed.data.city,
 			coverImageUrl: parsed.data.coverImageUrl,
 			status: 'tersedia',
-			additionalImageUrls: [],
+			additionalImageUrls: []
 		});
 
 		throw redirect(303, `/buku/${bookId}`);
-	},
+	}
 };

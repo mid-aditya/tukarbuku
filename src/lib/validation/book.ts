@@ -18,3 +18,19 @@ export const bookInputSchema = z.object({
 });
 
 export type BookInput = z.infer<typeof bookInputSchema>;
+
+/** Field-level errors dari zod flatten, dipakai action form listing + komponen ListingForm. */
+export type ListingField =
+  | 'title'
+  | 'author'
+  | 'condition'
+  | 'description'
+  | 'listingType'
+  | 'price'
+  | 'wantedInExchange'
+  | 'city'
+  | 'coverImageUrl'
+  | 'form';
+
+export type ListingFormErrors = Partial<Record<ListingField, string[]>>;
+export type ListingFormData = { error?: string; errors?: ListingFormErrors };
