@@ -2,7 +2,7 @@ import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { getDb } from '$lib/server/db';
 import { conversations, users, books } from '$lib/server/db/schema';
-import { eq, desc, or, and } from 'drizzle-orm';
+import { eq, desc, or, and, sql } from 'drizzle-orm';
 import { alias } from 'drizzle-orm/pg-core';
 import { uuid } from '$lib/server/uuid';
 import { conversationInputSchema, conversationIdSchema } from '$lib/validation/conversation';
@@ -30,6 +30,14 @@ export const GET: RequestHandler = async ({ locals }) => {
 			bookTitle: books.title,
 			participantOneName: participantOne.name,
 			participantTwoName: participantTwo.name,
+			// Unread messages addressed to the viewer in this conversation.
+			unreadCount: sql<number>`(
+				select count(*)::int
+				from messages m
+				where m.conversation_id = ${conversations.id}
+				  and m.sender_id <> ${userId}
+				  and m.read_at is null
+			)`.as('unread_count'),
 		})
 		.from(conversations)
 		.leftJoin(books, eq(books.id, conversations.bookId))
@@ -55,6 +63,7 @@ export const GET: RequestHandler = async ({ locals }) => {
 			createdAt: row.createdAt,
 			bookTitle: row.bookTitle ?? null,
 			otherUserName: otherUserName ?? 'Tanpa nama',
+			unreadCount: row.unreadCount ?? 0,
 		};
 	});
 

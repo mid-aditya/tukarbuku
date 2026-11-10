@@ -3,6 +3,7 @@
 	import Card from '$lib/components/ui/card.svelte';
 	import Button from '$lib/components/ui/button.svelte';
 	import Avatar from '$lib/components/ui/avatar.svelte';
+	import Badge from '$lib/components/ui/badge.svelte';
 
 	interface ConversationPreview {
 		id: string;
@@ -10,6 +11,7 @@
 		bookTitle: string | null;
 		otherUserName: string | null;
 		createdAt: string;
+		unreadCount: number;
 	}
 
 	let conversations: ConversationPreview[] = $state([]);
@@ -56,9 +58,12 @@
 						<Avatar name={conv.otherUserName ?? '?'} />
 						<div class="flex min-w-0 flex-1 items-center justify-between gap-3">
 							<div class="min-w-0">
-								<p class="truncate text-sm font-bold">{conv.otherUserName ?? 'Tanpa nama'}</p>
+								<p class="truncate text-sm font-bold" class:text-primary={conv.unreadCount > 0}>{conv.otherUserName ?? 'Tanpa nama'}</p>
 								{#if conv.bookTitle}<p class="truncate text-xs text-muted-foreground">{conv.bookTitle}</p>{/if}
 							</div>
+							{#if conv.unreadCount > 0}
+								<Badge class="shrink-0 rounded-full px-2 text-[11px] font-bold" aria-label={`${conv.unreadCount} pesan belum dibaca`}>{conv.unreadCount}</Badge>
+							{/if}
 							<time class="shrink-0 text-xs text-muted-foreground">{new Date(conv.createdAt).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}</time>
 						</div>
 					</a>
