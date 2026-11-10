@@ -1,6 +1,7 @@
 <script lang="ts">
-	import { onMount, tick } from 'svelte';
+	import { onMount, tick, onDestroy } from 'svelte';
 	import { page } from '$app/stores';
+	import { io, type Socket } from 'socket.io-client';
 	import Card from '$lib/components/ui/card.svelte';
 	import Button from '$lib/components/ui/button.svelte';
 	import Input from '$lib/components/ui/input.svelte';
@@ -15,6 +16,13 @@
 		senderName?: string;
 		tempId?: string;
 	}
+
+	type ReadReceipt = {
+		conversationId: string;
+		readerId: string;
+		messageIds: string[];
+		readAt: string;
+	};
 
 	interface Conversation {
 		id: string;
@@ -33,6 +41,18 @@
 	let messagesEl: HTMLDivElement | undefined = $state(undefined);
 	let currentUserId: string | null = $state(null);
 	let conversation: Conversation | null = $state(null);
+
+	// ---- Realtime state -----------------------------------------------------
+	// Production (node server.js) exposes Socket.IO; `npm run dev` (Vite) does
+	// not, so the client falls back to REST polling while disconnected.
+	let socket: Socket | null = null;
+	let live = $state(false);
+	let fallbackNote: string | null = $state(null);
+	let pollTimer: ReturnType<typeof setInterval> | null = null;
+
+	let { data }: { data: { userId: string } } = $props();
+	// svelte-ignore state_referenced_locally
+	currentUserId = data.userId;
 
 	function formatTime(iso: string): string {
 		return new Date(iso).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
@@ -111,6 +131,80 @@
 			sending = false;
 		}
 	}
+	// ---- Realtime connection ------------------------------------------------
+	function handleIncomingMessage(msg: Message) {
+		if (msg.conversationId !== conversationId) return;
+		// Own message: REST response already replaced the optimistic bubble with
+		// the persisted row (same id), or the socket beat the REST response —
+		// either way, match a pending optimistic bubble by content.
+		const pending = messages.find(
+			(m) => m.tempId && m.senderId === msg.senderId && m.content === msg.content
+		);
+		if (pending) {
+			messages = messages.map((m) => (m.tempId === pending.tempId ? { ...msg } : m));
+			return;
+		}
+		if (messages.some((m) => m.id === msg.id)) return;
+		messages = [...messages, msg];
+		void scrollToBottom();
+		// We just read everything the other person sent.
+		if (msg.senderId !== currentUserId) socket?.emit('message:read', conversationId);
+	}
+	function handleReadReceipt(receipt: ReadReceipt) {
+		if (receipt.readerId === currentUserId || receipt.conversationId !== conversationId) return;
+		messages = messages.map((m) =>
+			receipt.messageIds.includes(m.id) && !m.readAt ? { ...m, readAt: receipt.readAt } : m
+		);
+	}
+	function startPolling() {
+		if (pollTimer) return;
+		pollTimer = setInterval(() => {
+			void loadMessages();
+		}, 5000);
+	}
+	function stopPolling() {
+		if (pollTimer) {
+			clearInterval(pollTimer);
+			pollTimer = null;
+		}
+	}
+	function connectSocket() {
+		if (socket) return;
+		// Same-origin: the custom production server hosts Socket.IO. Under Vite
+		// dev this URL 404s, the client lands in the polling fallback below.
+		socket = io({ withCredentials: true });
+		socket.on('connect', () => {
+			live = true;
+			fallbackNote = null;
+			stopPolling();
+			socket?.emit(
+				'join:conversation',
+				conversationId,
+				(res: { ok: boolean; reason?: string }) => {
+					if (res?.ok) {
+						socket?.emit('message:read', conversationId);
+					} else {
+						// Not a participant → the REST messages endpoint 403s anyway.
+						console.warn('[socket] join ditolak:', res?.reason);
+					}
+				}
+			);
+		});
+		socket.on('message:new', handleIncomingMessage);
+		socket.on('message:read', handleReadReceipt);
+		socket.on('connect_error', (err: Error) => {
+			// Dev server has no /socket.io/ route; other failures (logout expiry,
+			// server restart) also degrade to polling instead of error spam.
+			live = false;
+			fallbackNote = err.message;
+			startPolling();
+		});
+		socket.on('disconnect', () => {
+			live = false;
+			startPolling();
+		});
+	}
+
 	async function loadConversation() {
 		try {
 			const res = await fetch('/api/conversations');
@@ -130,6 +224,13 @@
 		await loadConversation();
 		await loadMessages();
 		await scrollToBottom();
+		connectSocket();
+	});
+
+	onDestroy(() => {
+		socket?.disconnect();
+		socket = null;
+		stopPolling();
 	});
 </script>
 
@@ -145,6 +246,15 @@
 				<p class="text-sm text-muted-foreground">Memuat…</p>
 			{/if}
 		</div>
+		{#if live}
+			<span class="ml-auto flex shrink-0 items-center gap-1.5 text-xs font-semibold text-emerald-600" title="Terhubung secara realtime">
+				<span class="h-1.5 w-1.5 rounded-full bg-emerald-500" aria-hidden="true"></span> Langsung
+			</span>
+		{:else}
+			<span class="ml-auto flex shrink-0 items-center gap-1.5 text-xs font-semibold text-muted-foreground" title={fallbackNote ? `Realtime tidak tersedia: ${fallbackNote}. Pesan baru dimuat otomatis tiap 5 detik.` : 'Menghubungkan realtime…'}>
+				<span class="h-1.5 w-1.5 rounded-full bg-muted-foreground/50" aria-hidden="true"></span> Langsung tidak aktif
+			</span>
+		{/if}
 	</Card>
 
 	{#if loading}
@@ -163,7 +273,7 @@
 						<div class="flex" class:justify-end={msg.senderId === currentUserId}>
 							<div class="max-w-[78%] rounded-xl border px-3 py-2" class:bg-primary={msg.senderId === currentUserId} class:text-primary-foreground={msg.senderId === currentUserId} class:bg-background={msg.senderId !== currentUserId}>
 								<p class="m-0 text-sm whitespace-pre-wrap break-words">{msg.content}</p>
-								<time class="text-[10px] opacity-70">{formatTime(msg.sentAt)}</time>
+								<time class="text-[10px] opacity-70">{formatTime(msg.sentAt)}{#if msg.senderId === currentUserId}{msg.readAt ? ' ✓✓' : ' ✓'}{/if}</time>
 							</div>
 						</div>
 					{/each}

@@ -17,7 +17,7 @@
  *   server assumes a single instance (add Redis adapter before scaling out).
  *
  * Usage (production):
- *   npm run build && node server.js
+ *   npm run build && node --env-file=.env server.js
  *
  * `npm run dev` (Vite) has no Socket.IO layer; the chat client falls back to
  * REST polling in that case.
