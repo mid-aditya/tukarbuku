@@ -21,11 +21,19 @@
 		: data.book.wantedInExchange);
 	const formatPrice = (value: number) =>
 		new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(value);
+	const metaTitle = $derived(`${data.book.title} oleh ${data.book.author} — Tukarbuku`);
+	const metaDescription = $derived(
+		`${data.book.title} oleh ${data.book.author}, kondisi ${data.book.condition}, tersedia di ${data.book.city}.`
+	);
 </script>
 
 <svelte:head>
-	<title>{data.book.title} oleh {data.book.author} — Tukarbuku</title>
-	<meta name="description" content={`${data.book.title} oleh ${data.book.author}, kondisi ${data.book.condition}, tersedia di ${data.book.city}.`} />
+	<title>{metaTitle}</title>
+	<meta name="description" content={metaDescription} />
+	<meta property="og:type" content="product" />
+	<meta property="og:title" content={metaTitle} />
+	<meta property="og:description" content={metaDescription} />
+	<meta property="og:image" content={data.book.cover} />
 </svelte:head>
 
 <div class="mx-auto max-w-6xl px-4 py-8">

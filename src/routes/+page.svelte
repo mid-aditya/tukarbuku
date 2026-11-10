@@ -78,7 +78,20 @@
 	});
 </script>
 
-<svelte:head><title>Tukarbuku — Jual dan barter buku bekas</title></svelte:head>
+<svelte:head>
+	<title>Tukarbuku — Jual dan barter buku bekas</title>
+	<meta
+		name="description"
+		content="Marketplace buku bekas komunitas: beli novel dan nonfiksi second, atau barter dengan koleksimu. COD di sekitarmu, tanpa biaya listing."
+	/>
+	<meta
+		property="og:description"
+		content="Marketplace buku bekas komunitas: beli novel dan nonfiksi second, atau barter dengan koleksimu. COD di sekitarmu, tanpa biaya listing."
+	/>
+	{#if data.books[0]?.cover}
+		<meta property="og:image" content={data.books[0].cover} />
+	{/if}
+</svelte:head>
 
 <main>
 	<!-- Hero carousel -->

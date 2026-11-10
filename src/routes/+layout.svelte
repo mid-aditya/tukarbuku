@@ -38,7 +38,7 @@
 </script>
 
 <svelte:head>
-	<meta name="description" content="Tukarbuku — temukan buku bekas, jual, atau barter dengan pembaca di kotamu." />
+	<meta property="og:site_name" content="Tukarbuku" />
 </svelte:head>
 
 <!-- Bar USP -->
