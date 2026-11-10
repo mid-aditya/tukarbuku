@@ -4,6 +4,7 @@
 	import Badge from '$lib/components/ui/badge.svelte';
 	import Card from '$lib/components/ui/card.svelte';
 	import BookCard from '$lib/components/book-card.svelte';
+	import { browser } from '$app/environment';
 	import {
 		ArrowRight,
 		ArrowLeft,
@@ -18,7 +19,8 @@
 		Handshake,
 		Search,
 		MessagesSquare,
-		Pause
+		Pause,
+		Play
 	} from '@lucide/svelte';
 
 	let { data }: { data: { books: Book[] } } = $props();
@@ -27,6 +29,7 @@
 		new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(price);
 
 	let heroIndex = $state(0);
+	let heroPaused = $state(browser && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
 
 	const jual = $derived(data.books.filter((b) => b.listingType === 'JUAL'));
 	const barter = $derived(data.books.filter((b) => b.listingType === 'BARTER'));
@@ -64,6 +67,15 @@
 	const slide = (el: HTMLElement | null, dx: number) => el?.scrollBy({ left: dx, behavior: 'smooth' });
 
 	const activeHero = $derived(heroSlides[heroIndex] ?? heroSlides[0]);
+	const heroAuto = $derived(heroSlides.length > 1 && !heroPaused);
+
+	$effect(() => {
+		if (!heroAuto) return;
+		const timer = setInterval(() => {
+			heroIndex = (heroIndex + 1) % heroSlides.length;
+		}, 5000);
+		return () => clearInterval(timer);
+	});
 </script>
 
 <svelte:head><title>Tukarbuku — Jual dan barter buku bekas</title></svelte:head>
@@ -108,7 +120,15 @@
 			</button>
 
 			<div class="absolute bottom-4 left-6 flex items-center gap-2 md:left-12">
-				<Pause class="size-4 text-white" aria-hidden="true" />
+				<button
+					type="button"
+					class="grid size-6 place-items-center text-white/90 transition-colors hover:text-white"
+					aria-label={heroPaused ? 'Putar slide otomatis' : 'Jeda slide otomatis'}
+					aria-pressed={heroPaused}
+					onclick={() => (heroPaused = !heroPaused)}
+				>
+					{#if heroPaused}<Play class="size-4" />{:else}<Pause class="size-4" />{/if}
+				</button>
 				{#each heroSlides as _, i}
 					<button
 						type="button"
