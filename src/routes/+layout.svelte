@@ -41,6 +41,14 @@
 	<meta property="og:site_name" content="Tukarbuku" />
 </svelte:head>
 
+<!-- Skip ke konten utama untuk pengguna keyboard -->
+<a
+	href="#konten-utama"
+	class="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:bg-primary focus:px-4 focus:py-2 focus:text-sm focus:font-bold focus:text-primary-foreground"
+>
+	Langsung ke konten utama
+</a>
+
 <!-- Bar USP -->
 <div class="bg-foreground text-background">
 	<div class="mx-auto flex max-w-7xl flex-wrap items-center justify-center gap-x-8 gap-y-1 px-4 py-2.5 text-xs font-semibold md:text-sm">
@@ -105,7 +113,9 @@
 
 <SiteNavDrawer bind:open={menuOpen} />
 
-{@render children?.()}
+<div id="konten-utama">
+	{@render children?.()}
+</div>
 
 <a
 	href="/dashboard/pesanku"

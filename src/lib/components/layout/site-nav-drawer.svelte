@@ -25,6 +25,20 @@
 		onNavigate?: () => void;
 	} = $props();
 
+	let closeButton: HTMLButtonElement | undefined = $state(undefined);
+
+	// Move focus into the drawer when it opens so keyboard users are not left on the page behind it.
+	$effect(() => {
+		if (open) closeButton?.focus();
+	});
+
+	function handleKeydown(event: KeyboardEvent) {
+		if (event.key === 'Escape' && open) {
+			event.preventDefault();
+			close();
+		}
+	}
+
 	const mainLinks = [
 		{ href: '/#terlaris', label: 'Terlaris', icon: Heart },
 		{ href: '/koleksi?type=JUAL', label: 'Promosi', icon: Tag },
@@ -60,16 +74,21 @@
 	}
 </script>
 
+<svelte:window onkeydown={handleKeydown} />
+
 {#if open}
 	<button type="button" class="fixed inset-0 z-50 bg-black/45" aria-label="Tutup menu" onclick={close}></button>
 
-	<aside
-		class="fixed inset-y-0 left-0 z-50 flex w-full max-w-md flex-col bg-background shadow-xl"
+	<div
+		role="dialog"
+		aria-modal="true"
 		aria-label="Menu navigasi"
+		class="fixed inset-y-0 left-0 z-50 flex w-full max-w-md flex-col bg-background shadow-xl"
 	>
 		<div class="flex items-center justify-between bg-muted px-4 py-4">
 			<span class="text-lg font-bold">Menu</span>
 			<button
+				bind:this={closeButton}
 				type="button"
 				class="grid size-11 place-items-center bg-primary text-primary-foreground"
 				aria-label="Tutup menu"
@@ -151,5 +170,5 @@
 				</div>
 			</div>
 		</nav>
-	</aside>
+	</div>
 {/if}
