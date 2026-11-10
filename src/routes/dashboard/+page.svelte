@@ -93,6 +93,7 @@
 								<p class="text-xs text-muted-foreground">Dipasang {formatDate(book.createdAt)}</p>
 							</div>
 							<div class="flex shrink-0 flex-col items-end gap-1">
+								<a href={`/dashboard/buku/${book.id}/edit`} class="text-xs font-semibold text-primary hover:underline">Edit</a>
 								<Badge variant={book.listingType === 'JUAL' ? 'jual' : 'barter'} class="text-[10px] font-bold uppercase">
 									{book.listingType === 'JUAL' ? 'Dijual' : 'Barter'}
 								</Badge>
