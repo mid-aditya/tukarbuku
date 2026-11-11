@@ -1,6 +1,6 @@
 <script lang="ts">
 	import Badge from '$lib/components/ui/badge.svelte';
-	import { cn } from '$lib/components/ui/utils';
+	import { cn } from '$lib/utils.js';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
 	import { favorites } from '$lib/stores/favorites.svelte';
