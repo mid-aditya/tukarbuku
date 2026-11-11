@@ -48,13 +48,15 @@
 				{data.summary.activeListings ? 'Tayang di katalog' : 'Belum ada buku'}
 			</p>
 		</Card>
-		<Card class="p-6">
-			<p class="text-sm text-muted-foreground">Penawaran masuk</p>
-			<p class="mt-1 text-3xl font-bold">{data.summary.pendingOffers}</p>
-			<p class="text-xs text-muted-foreground">
-				{data.summary.pendingOffers ? 'Menunggu jawabanmu' : 'Tidak ada yang menunggu'}
-			</p>
-		</Card>
+		<a href="/dashboard/transaksi" class="block">
+			<Card class="p-6 transition-colors hover:bg-muted/50">
+				<p class="text-sm text-muted-foreground">Penawaran masuk</p>
+				<p class="mt-1 text-3xl font-bold">{data.summary.pendingOffers}</p>
+				<p class="text-xs text-muted-foreground">
+					{data.summary.pendingOffers ? 'Menunggu jawabanmu' : 'Tidak ada yang menunggu'}
+				</p>
+			</Card>
+		</a>
 		<Card class="p-6">
 			<p class="text-sm text-muted-foreground">Pesan belum dibaca</p>
 			<p class="mt-1 text-3xl font-bold">{data.summary.unreadMessages}</p>
