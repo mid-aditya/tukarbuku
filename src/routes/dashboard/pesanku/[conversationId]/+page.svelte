@@ -56,7 +56,6 @@
 	// ---- Kesepakatan (transaksi) --------------------------------------------
 	let bookStatus: BookStatus | null = $state(null);
 	let proposing = $state(false);
-	let dealMessage: string | null = $state(null);
 	let dealError: string | null = $state(null);
 
 	async function proposeDeal() {
@@ -81,7 +80,6 @@
 			}
 			const saved = (await res.json()) as { bookStatus: BookStatus };
 			bookStatus = saved.bookStatus;
-			dealMessage = 'Kesepakatan diajukan. Listing terkunci status “Sedang diproses” — lacak di dashboard → Transaksi.';
 		} catch (e) {
 			dealError = e instanceof Error ? e.message : 'Gagal mengajukan kesepakatan.';
 		} finally {
@@ -306,8 +304,11 @@
 			</div>
 			<Button onclick={() => proposeDeal()} disabled={proposing}>{proposing ? 'Mengajukan…' : 'Ajukan kesepakatan'}</Button>
 		</Card>
-	{:else if dealMessage}
-		<Card class="mt-4 border-primary/40 bg-primary/5 p-4 text-sm" role="status">{dealMessage}</Card>
+	{:else if conversation?.bookId && bookStatus === 'proses'}
+		<Card class="mt-4 border-primary/40 bg-primary/5 p-4 text-sm" role="status">
+			<p class="font-bold">Kesepakatan sedang berjalan.</p>
+			<p class="mt-0.5 text-xs text-muted-foreground">Listing terkunci sampai transaksinya selesai atau dibatalkan — lacak dan tandai statusnya di <a href="/dashboard/transaksi" class="font-semibold text-primary hover:underline">dashboard → Transaksi</a>.</p>
+		</Card>
 	{:else if dealError}
 		<Card class="mt-4 border-destructive/40 bg-destructive/5 p-4 text-sm text-destructive" role="alert">{dealError}</Card>
 	{/if}
