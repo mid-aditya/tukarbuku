@@ -2,9 +2,9 @@ import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { getDb } from '$lib/server/db';
 import { conversations, users, books } from '$lib/server/db/schema';
-import { eq, desc, or, and, sql } from 'drizzle-orm';
+import { eq, desc, or, sql } from 'drizzle-orm';
 import { alias } from 'drizzle-orm/pg-core';
-import { uuid } from '$lib/server/uuid';
+import { findOrCreateConversation } from '$lib/server/conversations';
 import { conversationInputSchema, conversationIdSchema } from '$lib/validation/conversation';
 import { rateLimit } from '$lib/server/rate-limit';
 
@@ -107,28 +107,7 @@ export const POST: RequestHandler = async ({ locals, request }) => {
 		if (!bookRow) throw error(400, 'Buku yang dituju tidak ditemukan');
 	}
 
-	// Check for existing conversation with this recipient.
-	const existing = await db
-		.select({ id: conversations.id })
-		.from(conversations)
-		.where(
-			or(
-				and(eq(conversations.participantOneId, userId), eq(conversations.participantTwoId, recipientId)),
-				and(eq(conversations.participantTwoId, userId), eq(conversations.participantOneId, recipientId)),
-			),
-		);
-
-	if (existing.length) {
-		return json({ id: existing[0].id });
-	}
-
-	const id = uuid();
-	await db.insert(conversations).values({
-		id,
-		bookId: bookId ?? null,
-		participantOneId: userId,
-		participantTwoId: recipientId,
-	});
-
+	// Check for existing conversation with this recipient, otherwise create one.
+	const id = await findOrCreateConversation({ userId, recipientId, bookId });
 	return json({ id });
 };

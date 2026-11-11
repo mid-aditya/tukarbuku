@@ -7,6 +7,7 @@
 	import BookCard from '$lib/components/book-card.svelte';
 	let { data }: { data: PageData } = $props();
 	let saved = $state(false);
+	const isOwner = $derived(data.viewerId !== null && data.viewerId === data.book.sellerId);
 	const createdAt = $derived(
 		new Intl.DateTimeFormat('id-ID', { dateStyle: 'long' }).format(new Date(data.book.createdAt))
 	);
@@ -85,8 +86,18 @@
 				<Button href={`/login?redirectTo=/buku/${data.book.id}`} variant="outline" size="sm">Lihat profil</Button>
 			</Card>
 
-			<Button href={`/login?redirectTo=/buku/${data.book.id}`} size="lg" class="mt-4 w-full">{data.book.listingType === 'JUAL' ? 'Chat penjual' : 'Ajukan barter'}</Button>
-			<p class="mt-2 text-center text-xs text-muted-foreground">Masuk dengan Google untuk memulai percakapan.</p>
+			{#if isOwner}
+				<Button href={`/dashboard/buku/${data.book.id}/edit`} size="lg" variant="outline" class="mt-4 w-full">Kelola listing ini</Button>
+				<p class="mt-2 text-center text-xs text-muted-foreground">Ini listingmu — calon pembeli akan menghubungimu lewat chat.</p>
+			{:else if data.viewerId}
+				<form method="POST" action="?/chat" class="mt-4">
+					<Button type="submit" size="lg" class="w-full">{data.book.listingType === 'JUAL' ? 'Chat penjual' : 'Ajukan barter'}</Button>
+				</form>
+				<p class="mt-2 text-center text-xs text-muted-foreground">Percakapan terbuka di dashboard → Pesan.</p>
+			{:else}
+				<Button href={`/login?redirectTo=/buku/${data.book.id}`} size="lg" class="mt-4 w-full">{data.book.listingType === 'JUAL' ? 'Chat penjual' : 'Ajukan barter'}</Button>
+				<p class="mt-2 text-center text-xs text-muted-foreground">Masuk dengan Google untuk memulai percakapan.</p>
+			{/if}
 		</section>
 	</div>
 
