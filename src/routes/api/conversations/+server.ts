@@ -28,6 +28,7 @@ export const GET: RequestHandler = async ({ locals }) => {
 			participantTwoId: conversations.participantTwoId,
 			createdAt: conversations.createdAt,
 			bookTitle: books.title,
+			bookStatus: books.status,
 			participantOneName: participantOne.name,
 			participantTwoName: participantTwo.name,
 			// Unread messages addressed to the viewer in this conversation.
@@ -62,6 +63,7 @@ export const GET: RequestHandler = async ({ locals }) => {
 			participantTwoId: row.participantTwoId,
 			createdAt: row.createdAt,
 			bookTitle: row.bookTitle ?? null,
+			bookStatus: row.bookStatus ?? null,
 			otherUserName: otherUserName ?? 'Tanpa nama',
 			unreadCount: row.unreadCount ?? 0,
 		};

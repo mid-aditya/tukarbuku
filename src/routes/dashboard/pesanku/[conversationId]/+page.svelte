@@ -24,10 +24,13 @@
 		readAt: string;
 	};
 
+	type BookStatus = 'tersedia' | 'proses' | 'selesai' | 'dibatalkan';
+
 	interface Conversation {
 		id: string;
 		bookId: string | null;
 		bookTitle?: string;
+		bookStatus?: BookStatus | null;
 		otherUserName?: string;
 	}
 
@@ -49,6 +52,42 @@
 	let live = $state(false);
 	let fallbackNote: string | null = $state(null);
 	let pollTimer: ReturnType<typeof setInterval> | null = null;
+
+	// ---- Kesepakatan (transaksi) --------------------------------------------
+	let bookStatus: BookStatus | null = $state(null);
+	let proposing = $state(false);
+	let dealMessage: string | null = $state(null);
+	let dealError: string | null = $state(null);
+
+	async function proposeDeal() {
+		if (proposing || !conversationId) return;
+		proposing = true;
+		dealError = null;
+		try {
+			const res = await fetch('/api/transactions', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ conversationId })
+			});
+			if (!res.ok) {
+				let detail = 'Gagal mengajukan kesepakatan.';
+				try {
+					const data = (await res.json()) as { message?: string };
+					if (data?.message) detail = data.message;
+				} catch {
+					// keep generic
+				}
+				throw new Error(detail);
+			}
+			const saved = (await res.json()) as { bookStatus: BookStatus };
+			bookStatus = saved.bookStatus;
+			dealMessage = 'Kesepakatan diajukan. Listing terkunci status “Sedang diproses” — lacak di dashboard → Transaksi.';
+		} catch (e) {
+			dealError = e instanceof Error ? e.message : 'Gagal mengajukan kesepakatan.';
+		} finally {
+			proposing = false;
+		}
+	}
 
 	let { data }: { data: { userId: string } } = $props();
 	// svelte-ignore state_referenced_locally
@@ -211,6 +250,8 @@
 			if (!res.ok) return;
 			const convs: Conversation[] = await res.json();
 			conversation = convs.find((c) => c.id === conversationId) ?? null;
+			// Jangan menimpa status yang baru berubah lewat proposeDeal.
+			if (bookStatus === null) bookStatus = conversation?.bookStatus ?? null;
 		} catch { /* non-critical */ }
 	}
 	function handleKeydown(e: KeyboardEvent) {
@@ -256,6 +297,20 @@
 			</span>
 		{/if}
 	</Card>
+
+	{#if conversation?.bookId && bookStatus === 'tersedia'}
+		<Card class="mt-4 flex flex-wrap items-center gap-3 border-primary/40 bg-primary/5 p-4">
+			<div class="min-w-0 flex-1">
+				<p class="text-sm font-bold">Sudah sepakat dengan {conversation.otherUserName ?? 'dia'}?</p>
+				<p class="mt-0.5 text-xs text-muted-foreground">Mengajukan kesepakatan mengunci listing ini (status: Sedang diproses) dan membuatnya muncul di dashboard → Transaksi.</p>
+			</div>
+			<Button onclick={() => proposeDeal()} disabled={proposing}>{proposing ? 'Mengajukan…' : 'Ajukan kesepakatan'}</Button>
+		</Card>
+	{:else if dealMessage}
+		<Card class="mt-4 border-primary/40 bg-primary/5 p-4 text-sm" role="status">{dealMessage}</Card>
+	{:else if dealError}
+		<Card class="mt-4 border-destructive/40 bg-destructive/5 p-4 text-sm text-destructive" role="alert">{dealError}</Card>
+	{/if}
 
 	{#if loading}
 		<Card class="mt-4 p-12 text-center text-sm text-muted-foreground"><p>Memuat pesan…</p></Card>
