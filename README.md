@@ -4,13 +4,11 @@ Platform ringan untuk jual-beli dan barter buku bekas berbasis SvelteKit.
 
 ## Stack
 
-- SvelteKit + adapter-node
-- PostgreSQL
-- Drizzle ORM (tanpa Prisma)
+- SvelteKit + adapter-node, Socket.IO di proses yang sama (`server.js`) untuk chat realtime
+- PostgreSQL + Drizzle ORM
 - Zod untuk validasi input server
-- Google OAuth untuk autentikasi (tahap berikutnya)
-- Cloudflare R2/Supabase Storage untuk gambar (tahap berikutnya)
-- WebSocket terpisah untuk chat realtime (tahap berikutnya)
+- Auth.js Google OAuth untuk autentikasi
+- URL gambar eksternal (upload ke object storage masih tahap berikutnya)
 
 ## Local setup
 
@@ -32,6 +30,15 @@ npm run check
 npm run dev
 ```
 
+## Production
+
+```sh
+npm run build
+node --env-file=.env server.js
+```
+
+`server.js` membungkus handler SvelteKit adapter-node dan Socket.IO untuk chat realtime; koneksi socket diotentikasi lewat cookie sesi Auth.js di handshake. Catatan: rate limiter chat in-memory, jadi server mengasumsikan satu instance.
+
 ## Production requirements
 
 Sebelum deploy, konfigurasi wajib berikut harus tersedia di secret manager platform:
@@ -46,4 +53,4 @@ Jangan commit `.env`. Gunakan `npm ci` setelah lockfile tersedia, jalankan `npm 
 
 ## Current status
 
-Landing page publik sudah tersedia menggunakan seed data lokal. Schema Drizzle dan validasi boundary sudah disiapkan. Auth, CRUD listing, storage gambar, transaksi, WebSocket chat, rate limiting, dan observability masih perlu diimplementasikan sebelum production launch.
+Fitur inti sudah jalan: landing + koleksi dari database, detail buku, favorit, Google OAuth dengan setup profil, dashboard, buat/edit/hapus listing, chat realtime persisten dengan pesan belum-dibaca, sitemap/robots/meta sosial, validasi zod, dan rate limiting. Yang belum, sebelum production launch: transaksi (schema sudah ada, alurnya belum), upload gambar ke object storage, dan observability.
